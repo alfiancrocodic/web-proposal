@@ -129,8 +129,8 @@ export default function ProjectDetailsPage(): React.JSX.Element {
                             <span className="bg-gray-200 text-gray-800 text-xs font-semibold px-2.5 py-1 rounded-full">{r.name || 'Role'}</span>
                           </div>
                           <div className="flex flex-wrap items-center gap-2">
-                            {platforms.map((p) => (
-                              <span key={p} className={`bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full`}>{p}</span>
+                            {platforms.map((p, pIdx) => (
+                              <span key={`${p}-${pIdx}`} className={`bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full`}>{p}</span>
                             ))}
                           </div>
                         </div>
