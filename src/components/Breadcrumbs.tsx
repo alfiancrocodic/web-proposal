@@ -1,4 +1,17 @@
-export default function Breadcrumbs({ crumbs = [] }) {
+import React from "react";
+
+/**
+ * Interface untuk props komponen Breadcrumbs
+ */
+interface BreadcrumbsProps {
+  crumbs?: string[];
+}
+
+/**
+ * Komponen Breadcrumbs untuk menampilkan navigasi hierarkis
+ * @param crumbs - Array string yang berisi nama-nama breadcrumb
+ */
+function Breadcrumbs({ crumbs = [] }: BreadcrumbsProps): React.JSX.Element {
   return (
     <nav className="flex text-sm text-gray-600" aria-label="Breadcrumb">
       <ol className="inline-flex items-center gap-2">
@@ -16,4 +29,6 @@ export default function Breadcrumbs({ crumbs = [] }) {
     </nav>
   );
 }
+
+export default Breadcrumbs;
 

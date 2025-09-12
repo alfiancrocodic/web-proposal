@@ -1,34 +1,73 @@
 "use client";
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
 
-export default function ProjectDetailsPage() {
+// Interface untuk data client
+interface Client {
+  id: string;
+  company: string;
+  picName: string;
+}
+
+// Interface untuk role dalam project
+interface Role {
+  name: string;
+  platforms: string[];
+  platform?: string; // untuk backward compatibility
+}
+
+// Interface untuk data project
+interface Project {
+  id: string;
+  name: string;
+  clientId: string;
+  createdAt: string;
+  analyst: string;
+  grade: string;
+  roles: (Role | string)[];
+}
+
+// Interface untuk data proposal
+interface Proposal {
+  id: string;
+  version: number;
+  createdAt: string;
+}
+
+/**
+ * Komponen halaman detail project
+ * @returns React component untuk menampilkan detail project
+ */
+export default function ProjectDetailsPage(): React.JSX.Element {
   const router = useRouter();
   const params = useParams();
   const id = params?.id;
-  const [project, setProject] = useState(null);
-  const [client, setClient] = useState(null);
-  const [proposals, setProposals] = useState([]);
+  const [project, setProject] = useState<Project | null>(null);
+  const [client, setClient] = useState<Client | null>(null);
+  const [proposals, setProposals] = useState<Proposal[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('auth')) router.replace('/login');
     if (!id) return;
     fetch(`/api/projects/${id}`).then(r=>r.json()).then(setProject);
-    fetch('/api/clients').then(r=>r.json()).then(cs => setClient(cs.find(c=>c.id===project?.clientId)));
+    fetch('/api/clients').then(r=>r.json()).then(cs => setClient(cs.find((c: Client)=>c.id===project?.clientId)));
     fetch(`/api/projects/${id}/proposals`).then(r=>r.json()).then(setProposals);
   }, [router, id, project?.clientId]);
 
-  const createProposal = async () => {
+  /**
+   * Fungsi untuk membuat proposal baru
+   */
+  const createProposal = async (): Promise<void> => {
     const res = await fetch(`/api/projects/${id}/proposals`, { method: 'POST' });
     if (res.ok) {
-      const pr = await res.json();
+      const pr: Proposal = await res.json();
       setProposals(prev => [pr, ...prev]);
     }
   };
 
-  if (!project) return null;
+  if (!project) return <div>Loading...</div>;
 
   return (
     <div className="bg-gray-50 min-h-screen">

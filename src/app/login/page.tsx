@@ -1,10 +1,20 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
+import React from 'react';
 
-export default function LoginPage() {
+/**
+ * Komponen halaman login
+ * Menampilkan form login dengan background image dan redirect setelah login
+ */
+export default function LoginPage(): React.JSX.Element {
   const router = useRouter();
-  const onSubmit = (e) => {
+  
+  /**
+   * Fungsi untuk handle submit form login
+   * @param e - Form submit event
+   */
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     localStorage.setItem('auth', '1');
     router.push('/');

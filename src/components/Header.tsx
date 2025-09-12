@@ -1,10 +1,19 @@
 "use client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import React from "react";
 
-export default function Header() {
+/**
+ * Komponen Header untuk navigasi utama aplikasi
+ * Menampilkan logo, judul aplikasi, dan tombol navigasi
+ */
+function Header(): React.JSX.Element {
   const router = useRouter();
-  const logout = () => {
+  
+  /**
+   * Fungsi untuk logout user dan redirect ke halaman login
+   */
+  const logout = (): void => {
     if (typeof window !== 'undefined') {
       localStorage.removeItem('auth');
       router.push('/login');
@@ -29,3 +38,5 @@ export default function Header() {
     </header>
   );
 }
+
+export default Header;

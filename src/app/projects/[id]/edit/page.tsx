@@ -1,8 +1,29 @@
 "use client";
-import { useEffect, useState } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
+
+// Interface untuk data client
+interface Client {
+  id: string;
+  company: string;
+  picName: string;
+}
+
+// Interface untuk role dalam project
+interface Role {
+  name: string;
+  platforms: string[];
+}
+
+// Interface untuk form project
+interface ProjectForm {
+  name: string;
+  analyst: string;
+  grade: string;
+  roles: Role[];
+}
 
 const PLATFORMS = [
   "Android Phone",
@@ -13,7 +34,7 @@ const PLATFORMS = [
   "Web Frontend",
 ];
 
-const PLATFORM_COLORS = {
+const PLATFORM_COLORS: Record<string, string> = {
   'Android Phone': 'bg-green-100 text-green-800',
   'Android Tablet': 'bg-emerald-100 text-emerald-800',
   'iOS iPhone': 'bg-gray-200 text-gray-800',
@@ -22,47 +43,130 @@ const PLATFORM_COLORS = {
   'Web Frontend': 'bg-cyan-100 text-cyan-800',
 };
 
-export default function NewProjectPage() {
+/**
+ * Fungsi untuk normalisasi data roles
+ * @param raw - Data roles mentah
+ * @returns Array roles yang sudah dinormalisasi
+ */
+function normalizeRoles(raw: any): Role[] {
+  if (!Array.isArray(raw)) return [];
+  if (raw.length === 0) return [];
+  if (typeof raw[0] === 'string') {
+    return [{ name: 'User', platforms: Array.from(new Set(raw)) }];
+  }
+  // objects with possible {name, platform}
+  const byName = new Map();
+  for (const item of raw) {
+    const name = item?.name || 'User';
+    const platform = item?.platform || '';
+    if (!byName.has(name)) byName.set(name, new Set());
+    if (platform) byName.get(name).add(platform);
+  }
+  return Array.from(byName.entries()).map(([name, set]) => ({ name, platforms: Array.from(set) }));
+}
+
+/**
+ * Komponen halaman edit project
+ * @returns React component untuk edit project
+ */
+export default function EditProjectPage(): React.JSX.Element {
   const router = useRouter();
-  const sp = useSearchParams();
-  const [clients, setClients] = useState([]);
-  const [form, setForm] = useState({ clientId: '', name: '', analyst: '', grade: 'A', roles: [] });
-  const [showRoleModal, setShowRoleModal] = useState(false);
-  const [roleName, setRoleName] = useState('');
-  const [selectedPlatforms, setSelectedPlatforms] = useState([]);
-  const [editRoleIndex, setEditRoleIndex] = useState(null);
+  const params = useParams();
+  const id = params?.id;
+  const [form, setForm] = useState<ProjectForm>({ name: '', analyst: '', grade: 'A', roles: [] });
+  const [client, setClient] = useState<Client | null>(null);
+  const [showRoleModal, setShowRoleModal] = useState<boolean>(false);
+  const [roleName, setRoleName] = useState<string>('');
+  const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
+  const [editRoleIndex, setEditRoleIndex] = useState<number | null>(null); // null = create new
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('auth')) router.replace('/login');
-    fetch('/api/clients').then(r=>r.json()).then(data => {
-      setClients(data);
-      const cid = sp.get('clientId');
-      setForm(f => ({ ...f, clientId: cid || (data[0]?.id || '') }));
-    });
-  }, [router, sp]);
+    if (!id) return;
+    (async () => {
+      const p = await fetch(`/api/projects/${id}`).then(r=>r.json());
+      const roles = normalizeRoles(p.roles);
+      setForm({ name: p.name, analyst: p.analyst, grade: p.grade, roles });
+      // fetch client for display
+      const clients = await fetch('/api/clients').then(r=>r.json());
+      setClient(clients.find((c: Client)=>c.id===p.clientId) || null);
+    })();
+  }, [router, id]);
 
-  const toggleRole = () => {};
-  const removeRole = (index) => setForm(f => ({ ...f, roles: f.roles.filter((_, i)=>i!==index) }));
-  const removePlatform = (roleIdx, platform) => setForm(f=>({ ...f, roles: f.roles.map((r,i)=> i!==roleIdx ? r : { ...r, platforms: r.platforms.filter(p=>p!==platform) }) }));
-  const openAddRole = () => { setEditRoleIndex(null); setRoleName(''); setSelectedPlatforms([]); setShowRoleModal(true); };
-  const openAddPlatform = (idx) => { setEditRoleIndex(idx); setRoleName(form.roles[idx]?.name || ''); setSelectedPlatforms([]); setShowRoleModal(true); };
-  const toggleSelectPlatform = (p) => setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x=>x!==p) : [...prev, p]);
-  const saveRoleModal = () => {
-    if (editRoleIndex === null) {
-      if (!roleName.trim() || selectedPlatforms.length === 0) return;
-      setForm(f => ({ ...f, roles: [...(f.roles||[]), { name: roleName.trim(), platforms: selectedPlatforms }] }));
-    } else {
-      if (selectedPlatforms.length === 0) { setShowRoleModal(false); return; }
-      setForm(f => ({ ...f, roles: f.roles.map((r,i)=> i!==editRoleIndex ? r : { ...r, platforms: Array.from(new Set([...(r.platforms||[]), ...selectedPlatforms])) }) }));
-    }
-    setRoleName(''); setSelectedPlatforms([]); setEditRoleIndex(null); setShowRoleModal(false);
+  /**
+   * Fungsi untuk menghapus role
+   * @param index - Index role yang akan dihapus
+   */
+  const removeRole = (index: number): void => {
+    setForm(f => ({ ...f, roles: f.roles.filter((_, i)=>i!==index) }));
   };
 
-  const submit = async (e) => {
-    e.preventDefault();
-    const res = await fetch('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-    const p = await res.json();
-    if (res.ok) router.push(`/projects/${p.id}`);
+  /**
+   * Fungsi untuk menghapus platform dari role
+   * @param roleIdx - Index role
+   * @param platform - Platform yang akan dihapus
+   */
+  const removePlatform = (roleIdx: number, platform: string): void => {
+    setForm(f => ({
+      ...f,
+      roles: f.roles.map((r, i) => i !== roleIdx ? r : { ...r, platforms: r.platforms.filter(p => p !== platform) }),
+    }));
+  };
+
+  /**
+   * Fungsi untuk membuka modal tambah role baru
+   */
+  const openAddRole = (): void => {
+    setEditRoleIndex(null);
+    setRoleName('');
+    setSelectedPlatforms([]);
+    setShowRoleModal(true);
+  };
+
+  /**
+   * Fungsi untuk membuka modal tambah platform ke role existing
+   * @param idx - Index role yang akan ditambah platform
+   */
+  const openAddPlatform = (idx: number): void => {
+    setEditRoleIndex(idx);
+    setRoleName(form.roles[idx]?.name || '');
+    setSelectedPlatforms([]);
+    setShowRoleModal(true);
+  };
+
+  /**
+   * Fungsi untuk toggle selection platform
+   * @param p - Platform yang akan di-toggle
+   */
+  const toggleSelectPlatform = (p: string): void => {
+    setSelectedPlatforms(prev => prev.includes(p) ? prev.filter(x=>x!==p) : [...prev, p]);
+  };
+
+  /**
+   * Fungsi untuk menyimpan role/platform dari modal
+   */
+  const saveRoleModal = (): void => {
+    if (editRoleIndex === null) {
+      if (!roleName.trim() || selectedPlatforms.length === 0) return;
+      setForm(f => ({ ...f, roles: [...f.roles, { name: roleName.trim(), platforms: selectedPlatforms }] }));
+    } else {
+      if (selectedPlatforms.length === 0) { setShowRoleModal(false); return; }
+      setForm(f => ({
+        ...f,
+        roles: f.roles.map((r, i) => i !== editRoleIndex ? r : { ...r, platforms: Array.from(new Set([...(r.platforms||[]), ...selectedPlatforms])) }),
+      }));
+    }
+    setRoleName('');
+    setSelectedPlatforms([]);
+    setShowRoleModal(false);
+  };
+
+  /**
+   * Fungsi untuk submit form edit project
+   */
+  const submit = async (): Promise<void> => {
+    const res = await fetch(`/api/projects/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
+    if (res.ok) router.push(`/projects/${id}`);
   };
 
   return (
@@ -87,7 +191,7 @@ export default function NewProjectPage() {
                 <label className="text-sm font-medium text-gray-700">Analyst</label>
                 <div className="relative mt-1">
                   <select value={form.analyst} onChange={e=>setForm({...form, analyst:e.target.value})} className="w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5 appearance-none">
-                    {['','Mas Adit','Analyst A','Analyst B'].map(a => <option key={a} value={a}>{a || 'Select analyst'}</option>)}
+                    {[form.analyst || '', 'Mas Adit', 'Analyst A', 'Analyst B'].filter(Boolean).map(a => <option key={a}>{a}</option>)}
                   </select>
                   <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
                     <svg className="w-5 h-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
@@ -96,17 +200,15 @@ export default function NewProjectPage() {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Company Name</label>
-                <select value={form.clientId} onChange={e=>setForm({...form, clientId:e.target.value})} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5">
-                  {clients.map(c => <option key={c.id} value={c.id}>{c.company}</option>)}
-                </select>
+                <input value={client?.company || ''} disabled className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">PIC Name</label>
-                <input value={clients.find(c=>c.id===form.clientId)?.picName || ''} disabled className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
+                <input value={client?.picName || ''} disabled className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Project Name</label>
-                <input value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" placeholder="Project name" />
+                <input value={form.name} onChange={e=>setForm({...form, name:e.target.value})} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Select Project Grade</label>
@@ -158,6 +260,12 @@ export default function NewProjectPage() {
             </div>
           </div>
         </div>
+
+        {/* Footer actions */}
+        <div className="flex justify-end gap-2">
+          <button type="button" onClick={()=>router.back()} className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100">Cancel</button>
+          <button onClick={submit} className="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
+        </div>
       </main>
 
       {/* Add Role Modal */}
@@ -187,7 +295,7 @@ export default function NewProjectPage() {
               </div>
             </div>
             <div className="mt-8 flex justify-end space-x-3">
-              <button onClick={()=>{ setShowRoleModal(false); setRoleName(''); setSelectedPlatforms([]); setEditRoleIndex(null); }} className="px-6 py-2 rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300">Cancel</button>
+              <button onClick={()=>{setShowRoleModal(false); setRoleName(''); setSelectedPlatforms([]); setEditRoleIndex(null);}} className="px-6 py-2 rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300">Cancel</button>
               <button onClick={saveRoleModal} className="px-6 py-2 rounded-lg text-white bg-blue-600 hover:bg-blue-700">Save</button>
             </div>
           </div>

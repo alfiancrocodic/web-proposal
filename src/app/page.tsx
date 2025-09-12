@@ -2,15 +2,54 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
+import React from 'react';
 
-export default function Home() {
+/**
+ * Interface untuk data client
+ */
+interface Client {
+  id: string;
+  company: string;
+  location: string;
+  badanUsaha: string;
+  picName: string;
+  position: string;
+}
+
+/**
+ * Interface untuk data project
+ */
+interface Project {
+  id: string;
+  name: string;
+  clientId: string;
+  analyst: string;
+  grade: string;
+}
+
+/**
+ * Interface untuk form data client
+ */
+interface ClientForm {
+  company: string;
+  location: string;
+  badanUsaha: string;
+  picName: string;
+  position: string;
+}
+
+/**
+ * Komponen halaman utama aplikasi Proposal Manager
+ * Menampilkan daftar client, project, dan form untuk menambah client baru
+ */
+export default function Home(): React.JSX.Element {
   const router = useRouter();
-  const [clients, setClients] = useState([]);
-  const [projects, setProjects] = useState([]);
-  const [form, setForm] = useState({ company: '', location: '', badanUsaha: 'Swasta', picName: '', position: '' });
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [newClient, setNewClient] = useState(null);
-  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [clients, setClients] = useState<Client[]>([]);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [form, setForm] = useState<ClientForm>({ company: '', location: '', badanUsaha: 'Swasta', picName: '', position: '' });
+  const [showConfirm, setShowConfirm] = useState<boolean>(false);
+  const [newClient, setNewClient] = useState<Client | null>(null);
+  const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('auth')) {
@@ -21,23 +60,33 @@ export default function Home() {
     fetch('/api/projects').then(r => r.json()).then(setProjects);
   }, [router]);
 
-  const suggestions = useMemo(() => {
+  /**
+   * Memo untuk mendapatkan suggestions client berdasarkan input company
+   */
+  const suggestions = useMemo((): Client[] => {
     if (!form.company) return [];
-    return clients.filter(c => c.company.toLowerCase().includes(form.company.toLowerCase())).slice(0, 5);
+    return clients.filter((c: Client) => c.company.toLowerCase().includes(form.company.toLowerCase())).slice(0, 5);
   }, [clients, form.company]);
 
-  const saveClient = async (e) => {
+  /**
+   * Fungsi untuk menyimpan client baru
+   * @param e - Form submit event
+   */
+  const saveClient = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     const res = await fetch('/api/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-    const c = await res.json();
+    const c: Client = await res.json();
     if (res.ok) {
       setNewClient(c);
       setShowConfirm(true);
-      setClients(prev => [c, ...prev]);
+      setClients((prev: Client[]) => [c, ...prev]);
     }
   };
 
-  const confirmAndAddProject = () => {
+  /**
+   * Fungsi untuk konfirmasi dan redirect ke halaman tambah project
+   */
+  const confirmAndAddProject = (): void => {
     setShowConfirm(false);
     if (newClient) router.push(`/projects/new?clientId=${newClient.id}`);
   };
