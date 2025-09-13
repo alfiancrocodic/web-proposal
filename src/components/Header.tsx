@@ -36,25 +36,14 @@ function Header(): React.JSX.Element {
    */
   const logout = async (): Promise<void> => {
     if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
+      const { logoutUser } = await import('@/lib/api');
       
-      // Call logout API
-      if (token) {
-        try {
-          await fetch('http://localhost:8000/api/logout', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json',
-            },
-          });
-        } catch (error) {
-          console.error('Logout error:', error);
-        }
+      try {
+        await logoutUser();
+      } catch (error) {
+        console.error('Logout error:', error);
       }
       
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user');
       router.push('/login');
     }
   };

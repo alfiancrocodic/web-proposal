@@ -3,6 +3,9 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { loginUser } from '@/lib/api';
+import { useToast } from '@/components/Toast';
+import { useErrorHandler } from '@/components/ErrorBoundary';
 
 /**
  * Interface untuk form login
@@ -21,41 +24,39 @@ export default function LoginPage(): React.JSX.Element {
   const [form, setForm] = useState<LoginForm>({ email: '', password: '' });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
+  const { showSuccess, showError, ToastContainer } = useToast();
+  const { withErrorHandling } = useErrorHandler();
   
   /**
    * Fungsi untuk handle submit form login
    * @param e - Form submit event
    */
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const onSubmit = withErrorHandling(async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setLoading(true);
     setError('');
     
     try {
-      const response = await fetch('http://localhost:8000/api/login', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(form),
-      });
+      const data = await loginUser(form.email, form.password);
       
-      const data = await response.json();
+      // Simpan token ke localStorage
+      localStorage.setItem('auth_token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
       
-      if (response.ok) {
-        // Simpan token ke localStorage
-        localStorage.setItem('auth_token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
+      showSuccess('Login berhasil! Mengalihkan ke dashboard...');
+      
+      // Delay sedikit untuk menampilkan toast
+      setTimeout(() => {
         router.push('/');
-      } else {
-        setError(data.message || 'Login gagal');
-      }
+      }, 1000);
     } catch (err) {
-      setError('Terjadi kesalahan koneksi');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan koneksi';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  });
   return (
     <div className="min-h-screen bg-cover bg-center flex items-center justify-center relative" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop')" }}>
       <div className="absolute inset-0 bg-blue-800 opacity-60" />
@@ -114,6 +115,7 @@ export default function LoginPage(): React.JSX.Element {
       <footer className="absolute bottom-4 text-center text-sm text-white">
         Copyright ©2025. All rights reserved.
       </footer>
+      <ToastContainer />
     </div>
   );
 }

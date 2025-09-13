@@ -49,7 +49,7 @@ export default function ProjectDetailsPage(): React.JSX.Element {
   const [proposals, setProposals] = useState<Proposal[]>([]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) router.replace('/login');
+    if (typeof window !== 'undefined' && !localStorage.getItem('auth')) router.replace('/login');
     if (!id) return;
     fetch(`/api/projects/${id}`).then(r=>r.json()).then(setProject);
     fetch('/api/clients').then(r=>r.json()).then(cs => setClient(cs.find((c: Client)=>c.id===project?.clientId)));
@@ -63,7 +63,7 @@ export default function ProjectDetailsPage(): React.JSX.Element {
     const res = await fetch(`/api/projects/${id}/proposals`, { method: 'POST' });
     if (res.ok) {
       const pr: Proposal = await res.json();
-      setProposals(prev => [pr, ...prev]);
+      router.push(`/projects/${id}/proposals/${pr.id}/edit`);
     }
   };
 
@@ -172,7 +172,7 @@ export default function ProjectDetailsPage(): React.JSX.Element {
                       <td className="px-4 py-3 font-medium text-gray-900">Version {item.version}</td>
                       <td className="px-4 py-3">{new Date(item.createdAt).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
-                        <button className="font-medium text-blue-600 hover:underline" onClick={()=>alert('Open proposal builder (future)')}>Open</button>
+                        <button className="font-medium text-blue-600 hover:underline" onClick={()=>router.push(`/projects/${id}/proposals/${item.id}/edit`)}>Open</button>
                       </td>
                     </tr>
                   ))}

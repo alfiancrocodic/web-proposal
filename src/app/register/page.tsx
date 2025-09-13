@@ -3,6 +3,9 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { registerUser } from '@/lib/api';
+import { useToast } from '@/components/Toast';
+import { useErrorHandler } from '@/components/ErrorBoundary';
 
 /**
  * Interface untuk form register
@@ -33,12 +36,14 @@ export default function RegisterPage(): React.JSX.Element {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
+  const { showSuccess, showError, showWarning, ToastContainer } = useToast();
+  const { withErrorHandling } = useErrorHandler();
   
   /**
    * Fungsi untuk handle submit form register
    * @param e - Form submit event
    */
-  const onSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+  const onSubmit = withErrorHandling(async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
     setLoading(true);
     setError('');
@@ -46,46 +51,57 @@ export default function RegisterPage(): React.JSX.Element {
     
     // Validasi password confirmation
     if (form.password !== form.password_confirmation) {
-      setError('Password dan konfirmasi password tidak sama');
+      const errorMessage = 'Password dan konfirmasi password tidak sama';
+      setError(errorMessage);
+      showWarning(errorMessage);
+      setLoading(false);
+      return;
+    }
+    
+    // Validasi panjang password
+    if (form.password.length < 6) {
+      const errorMessage = 'Password minimal 6 karakter';
+      setError(errorMessage);
+      showWarning(errorMessage);
       setLoading(false);
       return;
     }
     
     try {
-      const response = await fetch('http://localhost:8000/api/register', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(form),
+      await registerUser({
+        name: form.name,
+        email: form.email,
+        jabatan: form.jabatan,
+        password: form.password,
+        password_confirmation: form.password_confirmation
       });
       
-      const data = await response.json();
+      const successMessage = 'Registrasi berhasil! Mengalihkan ke halaman login...';
+      setSuccess(successMessage);
+      showSuccess(successMessage);
       
-      if (response.ok) {
-        setSuccess('Registrasi berhasil! Silakan login.');
-        // Reset form
-        setForm({
-          name: '',
-          nama: '',
-          email: '',
-          jabatan: '',
-          password: '',
-          password_confirmation: ''
-        });
-        // Redirect ke login setelah 2 detik
-        setTimeout(() => {
-          router.push('/login');
-        }, 2000);
-      } else {
-        setError(data.message || 'Registrasi gagal');
-      }
+      // Reset form
+      setForm({
+        name: '',
+        nama: '',
+        email: '',
+        jabatan: '',
+        password: '',
+        password_confirmation: ''
+      });
+      
+      // Redirect ke login setelah 2 detik
+      setTimeout(() => {
+        router.push('/login');
+      }, 2000);
     } catch (err) {
-      setError('Terjadi kesalahan koneksi');
+      const errorMessage = err instanceof Error ? err.message : 'Terjadi kesalahan koneksi';
+      setError(errorMessage);
+      showError(errorMessage);
     } finally {
       setLoading(false);
     }
-  };
+  });
 
   return (
     <div className="min-h-screen bg-cover bg-center flex items-center justify-center relative" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop')" }}>
@@ -190,6 +206,7 @@ export default function RegisterPage(): React.JSX.Element {
       <footer className="absolute bottom-4 text-center text-sm text-white">
         Copyright ©2025. All rights reserved.
       </footer>
+      <ToastContainer />
     </div>
   );
 }
