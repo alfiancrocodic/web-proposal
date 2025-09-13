@@ -81,7 +81,7 @@ export default function EditProjectPage(): React.JSX.Element {
   const [editRoleIndex, setEditRoleIndex] = useState<number | null>(null); // null = create new
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('auth')) router.replace('/login');
+    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) router.replace('/login');
     if (!id) return;
     (async () => {
       const p = await fetch(`/api/projects/${id}`).then(r=>r.json());

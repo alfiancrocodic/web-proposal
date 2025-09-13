@@ -1,7 +1,18 @@
 "use client";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useState, useEffect } from "react";
+
+/**
+ * Interface untuk data user
+ */
+interface User {
+  id: number;
+  name: string;
+  nama: string;
+  email: string;
+  jabatan: string;
+}
 
 /**
  * Komponen Header untuk navigasi utama aplikasi
@@ -9,13 +20,41 @@ import React from "react";
  */
 function Header(): React.JSX.Element {
   const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+  
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const userData = localStorage.getItem('user');
+      if (userData) {
+        setUser(JSON.parse(userData));
+      }
+    }
+  }, []);
   
   /**
    * Fungsi untuk logout user dan redirect ke halaman login
    */
-  const logout = (): void => {
+  const logout = async (): Promise<void> => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth');
+      const token = localStorage.getItem('auth_token');
+      
+      // Call logout API
+      if (token) {
+        try {
+          await fetch('http://localhost:8000/api/logout', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json',
+            },
+          });
+        } catch (error) {
+          console.error('Logout error:', error);
+        }
+      }
+      
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user');
       router.push('/login');
     }
   };
@@ -29,6 +68,12 @@ function Header(): React.JSX.Element {
           </div>
           <div className="flex items-center gap-3">
             <button onClick={() => router.push('/')} className="text-sm text-gray-600 hover:text-black">Home</button>
+            {user && (
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-600">{user.nama || user.name}</span>
+                <span className="text-xs text-gray-500">({user.jabatan})</span>
+              </div>
+            )}
             <button onClick={logout} className="text-sm text-gray-600 hover:text-black">Logout</button>
             {/* Fallback to local avatar to avoid remote host issues */}
             <Image src="/vercel.svg" alt="User" width={32} height={32} className="rounded-full" />

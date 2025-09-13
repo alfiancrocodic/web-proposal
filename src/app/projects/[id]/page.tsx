@@ -49,7 +49,7 @@ export default function ProjectDetailsPage(): React.JSX.Element {
   const [proposals, setProposals] = useState<Proposal[]>([]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('auth')) router.replace('/login');
+    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) router.replace('/login');
     if (!id) return;
     fetch(`/api/projects/${id}`).then(r=>r.json()).then(setProject);
     fetch('/api/clients').then(r=>r.json()).then(cs => setClient(cs.find((c: Client)=>c.id===project?.clientId)));

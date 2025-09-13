@@ -52,7 +52,7 @@ export default function Home(): React.JSX.Element {
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('auth')) {
+    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
       router.replace('/login');
       return;
     }

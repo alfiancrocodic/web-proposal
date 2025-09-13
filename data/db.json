@@ -49,25 +49,18 @@
           "platforms": [
             "Android Phone",
             "Android Tablet",
-            "iOS iPhone",
-            "iOS iPad"
-          ]
-        },
-        {
-          "name": "Sales",
-          "platforms": [
-            "Android Phone"
+            "iOS iPhone"
           ]
         },
         {
           "name": "Manager",
           "platforms": [
             "Android Phone",
-            "Android Tablet",
-            "iOS iPhone",
             "iOS iPad",
+            "Web Frontend",
             "Web Backend",
-            "Web Frontend"
+            "Android Tablet",
+            "iOS iPhone"
           ]
         }
       ],

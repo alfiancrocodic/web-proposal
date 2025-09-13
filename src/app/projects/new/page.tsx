@@ -72,7 +72,7 @@ export default function NewProjectPage(): React.JSX.Element {
   const [editRoleIndex, setEditRoleIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('auth')) router.replace('/login');
+    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) router.replace('/login');
     fetch('/api/clients').then(r=>r.json()).then(data => {
       setClients(data);
       const cid = sp.get('clientId');

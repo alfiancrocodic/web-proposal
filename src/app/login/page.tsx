@@ -1,7 +1,16 @@
 "use client";
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
-import React from 'react';
+import React, { useState } from 'react';
+import Link from 'next/link';
+
+/**
+ * Interface untuk form login
+ */
+interface LoginForm {
+  email: string;
+  password: string;
+}
 
 /**
  * Komponen halaman login
@@ -9,15 +18,43 @@ import React from 'react';
  */
 export default function LoginPage(): React.JSX.Element {
   const router = useRouter();
+  const [form, setForm] = useState<LoginForm>({ email: '', password: '' });
+  const [loading, setLoading] = useState<boolean>(false);
+  const [error, setError] = useState<string>('');
   
   /**
    * Fungsi untuk handle submit form login
    * @param e - Form submit event
    */
-  const onSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    localStorage.setItem('auth', '1');
-    router.push('/');
+    setLoading(true);
+    setError('');
+    
+    try {
+      const response = await fetch('http://localhost:8000/api/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(form),
+      });
+      
+      const data = await response.json();
+      
+      if (response.ok) {
+        // Simpan token ke localStorage
+        localStorage.setItem('auth_token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        router.push('/');
+      } else {
+        setError(data.message || 'Login gagal');
+      }
+    } catch (err) {
+      setError('Terjadi kesalahan koneksi');
+    } finally {
+      setLoading(false);
+    }
   };
   return (
     <div className="min-h-screen bg-cover bg-center flex items-center justify-center relative" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop')" }}>
@@ -31,17 +68,48 @@ export default function LoginPage(): React.JSX.Element {
           <h2 className="text-2xl font-bold text-gray-900">Login</h2>
           <p className="text-gray-600 mt-2">Welcome back! Please sign in.</p>
         </div>
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700">Work Email</label>
-            <input type="email" required className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" />
+            <input 
+              type="email" 
+              required 
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" 
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">Password</label>
-            <input type="password" required className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" />
+            <input 
+              type="password" 
+              required 
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" 
+            />
           </div>
-          <button type="submit" className="w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500">Login</button>
+          <button 
+            type="submit" 
+            disabled={loading}
+            className="w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? 'Loading...' : 'Login'}
+          </button>
         </form>
+        <div className="mt-4 text-center">
+          <p className="text-sm text-gray-600">
+            Don't have an account?{' '}
+            <Link href="/register" className="text-blue-600 hover:text-blue-800">
+              Register here
+            </Link>
+          </p>
+        </div>
       </div>
       <footer className="absolute bottom-4 text-center text-sm text-white">
         Copyright ©2025. All rights reserved.
