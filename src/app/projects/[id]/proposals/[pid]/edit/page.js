@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, Fragment } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -77,8 +77,8 @@ export default function ProposalBuilderPage() {
         next.systemEnvironment = {
           ...next.systemEnvironment,
           template: { mobile, web, simple: tpl?.simple },
-          mobile: next.systemEnvironment?.mobile || buildWithPairs(mobile),
-          web: next.systemEnvironment?.web || buildWithPairs(web),
+          mobile: buildWithPairs(mobile),
+          web: buildWithPairs(web),
         };
         if (!next.termsOfPayment || next.termsOfPayment.length === 0) {
           const tp = tpl?.complex?.terms_payment;
@@ -115,80 +115,8 @@ export default function ProposalBuilderPage() {
   const currency = (n) => new Intl.NumberFormat('id-ID').format(+n||0);
 
   const TabSystem = () => {
-    const mobile = content.systemEnvironment?.mobile;
-    const web = content.systemEnvironment?.web;
-    const simple = content.systemEnvironment?.simple;
-    const renderTable = (data, setKey) => {
-      if (!data) return null;
-      const cols = data.columns || [];
-      return (
-        <div className="space-y-2">
-          <div className="overflow-x-auto bg-white p-4 rounded-lg border">
-            <table className="w-full text-sm">
-              <thead className="text-xs text-gray-700 uppercase">
-                <tr>
-                  {cols.map(c => (<th key={c.key} className="py-3 px-2 text-left">{c.label}</th>))}
-                  <th className="py-3 px-2 text-center">Checklist</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.rows?.map((row, idx) => {
-                  const pairs = Array.isArray(row.pairs) ? row.pairs : [];
-                  const hasPairs = pairs.length > 0;
-                  return (
-                    <tr key={idx} className="hover:bg-gray-50 align-top">
-                    {cols.map(c => (
-                      <td key={c.key} className="py-2 px-2 align-top">
-                        {(() => {
-                          const val = row.values?.[c.key];
-                          const toArray = (v) => {
-                            if (Array.isArray(v)) return v;
-                            if (typeof v === 'string') {
-                              // coba parse JSON array; jika gagal, gunakan comma-separated
-                              try { const parsed = JSON.parse(v); if (Array.isArray(parsed)) return parsed; } catch {}
-                              return v.split(',').map(s=>s.trim()).filter(Boolean);
-                            }
-                            return null;
-                          };
-                          const arr = toArray(val);
-                          if (arr && arr.length) {
-                            return (
-                              <div className="flex flex-col gap-1">
-                                {arr.map((v,i)=>(
-                                  <div key={i} className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full inline-block w-fit">{v}</div>
-                                ))}
-                              </div>
-                            );
-                          }
-                          return <div>{val || ''}</div>;
-                        })()}
-                      </td>
-                    ))}
-                      <td className="py-2 px-2 text-center">
-                        {hasPairs ? (
-                          <div className="flex flex-col items-center gap-2">
-                            {pairs.map((p,i)=>(
-                              <input
-                                key={i}
-                                type="checkbox"
-                                checked={!!p.checked}
-                                onChange={(e)=> setContent(c=> ({...c, systemEnvironment: { ...c.systemEnvironment, [setKey]: { ...c.systemEnvironment[setKey], rows: c.systemEnvironment[setKey].rows.map((r,ri)=> ri!==idx? r : { ...r, pairs: r.pairs.map((pp,pi)=> pi!==i? pp : { ...pp, checked: e.target.checked }) }) } }}))}
-                              />
-                            ))}
-                          </div>
-                        ) : (
-                          <input type="checkbox" checked={!!row.checked} onChange={(e)=> setContent(c=> ({...c, systemEnvironment: { ...c.systemEnvironment, [setKey]: { ...c.systemEnvironment[setKey], rows: c.systemEnvironment[setKey].rows.map((r,i)=> i!==idx? r : { ...r, checked: e.target.checked }) } }}))} />
-                        )}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      );
-    };
+    const { systemEnvironment } = content;
+    const { mobile, web, simple } = systemEnvironment;
 
     const ensureSimpleInit = () => {
       if (content.systemEnvironment?.simple) return;
@@ -209,56 +137,241 @@ export default function ProposalBuilderPage() {
       }));
     };
 
-    const renderSimpleList = (key, title) => {
-      const list = (content.systemEnvironment?.simple || {})[key] || [];
-      if (!list.length) return null;
+    useEffect(() => {
+      if (!simple && content.systemEnvironment?.template && !content.systemEnvironment?.simple) {
+        ensureSimpleInit();
+      }
+    }, [content.systemEnvironment?.template, simple]);
+
+    // Sinkronisasi flag is_other dari template ke state simple yang sudah ada
+    // Tujuan: jika konten lama belum memiliki properti is_other (mis. pada Database Information),
+    // maka properti tersebut akan diisi berdasarkan template terbaru agar input "Other" bisa muncul.
+    useEffect(() => {
+      const tplSimple = content.systemEnvironment?.template?.simple;
+      const simpleState = content.systemEnvironment?.simple;
+      if (!tplSimple || !simpleState) return;
+
+      const keys = ['frontend_lang','app_info','account_availability','db_availability','db_info'];
+      let changed = false;
+      const nextSimple = { ...simpleState };
+
+      keys.forEach((k) => {
+        const list = Array.isArray(simpleState[k]) ? simpleState[k] : [];
+        const tplList = Array.isArray(tplSimple[k]) ? tplSimple[k] : [];
+
+        const updatedList = list.map((item) => {
+          const match = tplList.find((opt) => opt.label === item.label);
+          const is_other = !!(match && match.is_other);
+          if (item.is_other !== is_other) {
+            changed = true;
+            return { ...item, is_other };
+          }
+          return item;
+        });
+
+        nextSimple[k] = updatedList;
+      });
+
+      if (changed) {
+        setContent((c) => ({
+          ...c,
+          systemEnvironment: {
+            ...c.systemEnvironment,
+            simple: nextSimple,
+          },
+        }));
+      }
+    }, [content.systemEnvironment?.template, content.systemEnvironment?.simple]);
+
+    const renderTable = (data, setKey) => {
+      if (!data) return null;
+      const cols = data.columns || [];
+
+      // Tentukan kolom kiri dinamis berdasarkan template (engine atau framework)
+      const leftKey = data.leftKey; // bisa 'engine' atau 'framework' atau null
+      const leftLabel = leftKey === 'engine' ? 'Engine' : (leftKey === 'framework' ? 'Framework' : null);
+
+      // Definisikan header tambahan: kolom kiri (jika ada), Programming Language, dan Action
+      const additionalColumns = [
+        ...(leftLabel ? [{ key: leftKey, label: leftLabel }] : []),
+        { key: 'programming_language', label: 'Programming Language' },
+        { key: 'action', label: 'Action' },
+      ];
+
+      // Hindari duplikasi kolom dari definisi asli
+      const allColumns = [
+        ...cols.filter(c => c.key !== 'engine' && c.key !== 'framework' && c.key !== 'programming_language'),
+        ...additionalColumns
+      ];
+
       return (
-        <div className="bg-white p-4 rounded-lg border">
-          <h3 className="font-semibold mb-3">{title}</h3>
-          <div className="space-y-2">
-            {list.map((item, idx) => (
-              <div key={idx} className="flex items-start gap-3">
-                <input
-                  type="checkbox"
-                  checked={!!item.checked}
-                  onChange={(e)=> setContent(c=> ({
-                    ...c,
-                    systemEnvironment: {
-                      ...c.systemEnvironment,
-                      simple: {
-                        ...c.systemEnvironment.simple,
-                        [key]: c.systemEnvironment.simple[key].map((it,i)=> i!==idx ? it : { ...it, checked: e.target.checked })
-                      }
-                    }
-                  }))}
-                  className="mt-1"
-                />
-                <div className="flex-1">
-                  <div className="text-sm text-gray-800">{item.label}</div>
-                  {item.is_other && item.checked && (
-                    <input
-                      placeholder="Please specify..."
-                      value={item.otherText || ''}
-                      onChange={(e)=> setContent(c=> ({
-                        ...c,
-                        systemEnvironment: {
-                          ...c.systemEnvironment,
-                          simple: {
-                            ...c.systemEnvironment.simple,
-                            [key]: c.systemEnvironment.simple[key].map((it,i)=> i!==idx ? it : { ...it, otherText: e.target.value })
-                          }
-                        }
-                      }))}
-                      className="mt-1 w-full border border-gray-300 rounded p-2 text-sm"
-                    />
-                  )}
-                </div>
-              </div>
-            ))}
+        <div className="space-y-2">
+          <div className="overflow-x-auto bg-white rounded-lg border border-gray-300">
+            <table className="w-full text-sm">
+              <thead className="text-xs text-gray-700 uppercase border-b border-gray-300">
+                <tr>
+                  {allColumns.map(c => (<th key={c.key} className="py-3 px-2 text-left">{c.label}</th>))}
+                </tr>
+              </thead>
+              <tbody>
+                {data.rows?.map((row, idx) => {
+                  const pairs = Array.isArray(row.pairs) ? row.pairs : [];
+                  const rowSpan = pairs.length > 1 ? pairs.length : 1;
+
+                  return (
+                    <Fragment key={`row-${idx}`}>
+                      {pairs.map((p, i) => (
+                        <tr key={`${idx}-${i}-${p.engine}-${p.language}`} className="hover:bg-gray-50 align-top border-b border-gray-200">
+                          {i === 0 && (
+                            <Fragment>
+                              {cols.filter(c => c.key !== 'engine' && c.key !== 'framework' && c.key !== 'programming_language').map(c => (
+                                <td key={c.key} className="py-2 px-2 align-top" rowSpan={rowSpan}>
+                                  {row.values?.[c.key] || ''}
+                                </td>
+                              ))}
+                            </Fragment>
+                          )}
+                          {leftLabel && (<td className="py-2 px-2">{p.engine}</td>)}
+                          <td className="py-2 px-2">{p.language}</td>
+                          <td className="py-2 px-2 text-center">
+                            <input
+                              type="checkbox"
+                              checked={!!p.checked}
+                              onChange={(e) => setContent(c => ({
+                                ...c,
+                                systemEnvironment: {
+                                  ...c.systemEnvironment,
+                                  [setKey]: {
+                                    ...c.systemEnvironment[setKey],
+                                    rows: c.systemEnvironment[setKey].rows.map((r, ri) =>
+                                      ri !== idx ? r : {
+                                        ...r,
+                                        pairs: r.pairs.map((pp, pi) =>
+                                          pi !== i ? pp : { ...pp, checked: e.target.checked }
+                                        )
+                                      }
+                                    )
+                                  }
+                                }
+                              }))}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                      {pairs.length === 0 && (
+                        <tr className="hover:bg-gray-50 align-top border-b border-gray-200">
+                          {cols.filter(c => c.key !== 'engine' && c.key !== 'framework' && c.key !== 'programming_language').map(c => (
+                            <td key={c.key} className="py-2 px-2 align-top">
+                              {row.values?.[c.key] || ''}
+                            </td>
+                          ))}
+                          {leftLabel && <td className="py-2 px-2"></td>}
+                          <td className="py-2 px-2"></td>
+                          <td className="py-2 px-2 text-center">
+                            <input
+                              type="checkbox"
+                              checked={!!row.checked}
+                              onChange={(e) => setContent(c => ({
+                                ...c,
+                                systemEnvironment: {
+                                  ...c.systemEnvironment,
+                                  [setKey]: {
+                                    ...c.systemEnvironment[setKey],
+                                    rows: c.systemEnvironment[setKey].rows.map((r, i) =>
+                                      i !== idx ? r : { ...r, checked: e.target.checked }
+                                    )
+                                  }
+                                }
+                              }))}
+                            />
+                          </td>
+                        </tr>
+                      )}
+                    </Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
       );
     };
+
+    const renderSimpleList = (key, title) => {
+      const list = (content.systemEnvironment?.simple || {})[key] || [];
+      if (!list.length) return null;
+      const isRadio = key !== 'frontend_lang';
+
+      const handleRadioChange = (idx) => {
+        setContent(c => ({
+          ...c,
+          systemEnvironment: {
+            ...c.systemEnvironment,
+            simple: {
+              ...c.systemEnvironment.simple,
+              [key]: c.systemEnvironment.simple[key].map((it, i) => ({ ...it, checked: i === idx }))
+            }
+          }
+        }));
+      };
+
+      const handleCheckboxChange = (e, idx) => {
+        setContent(c => ({
+          ...c,
+          systemEnvironment: {
+            ...c.systemEnvironment,
+            simple: {
+              ...c.systemEnvironment.simple,
+              [key]: c.systemEnvironment.simple[key].map((it, i) => i !== idx ? it : { ...it, checked: e.target.checked })
+            }
+          }
+        }));
+      }
+
+      return (
+        <div className="space-y-2">
+          <div className="overflow-x-auto bg-white rounded-lg border border-gray-300">
+            <div className="p-4">
+              <h3 className="font-semibold mb-2">{title}</h3>
+              <div className="flex flex-row flex-wrap gap-4">
+                {list.map((item, idx) => (
+                  <div key={idx} className="flex items-center">
+                    <input
+                      type={isRadio ? "radio" : "checkbox"}
+                      id={`${key}-${idx}`}
+                      name={key}
+                      value={item.label}
+                      checked={!!item.checked}
+                      onChange={isRadio ? () => handleRadioChange(idx) : (e) => handleCheckboxChange(e, idx)}
+                      className="mr-2"
+                    />
+                    <label htmlFor={`${key}-${idx}`} className="text-sm">{item.label}</label>
+                    {item.is_other && item.checked && (
+                      <input
+                        placeholder="Please specify..."
+                        value={item.otherText || ''}
+                        onChange={(e)=> setContent(c=> ({
+                          ...c,
+                          systemEnvironment: {
+                            ...c.systemEnvironment,
+                            simple: {
+                              ...c.systemEnvironment.simple,
+                              [key]: c.systemEnvironment.simple[key].map((it,i)=> i!==idx ? it : { ...it, otherText: e.target.value })
+                            }
+                          }
+                        }))}
+                        className="ml-2 border border-gray-300 rounded p-1 text-sm"
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     return (
       <div className="space-y-6">
         <div>
@@ -280,9 +393,7 @@ export default function ProposalBuilderPage() {
           ) : null}
         </div>
 
-        {!simple && content.systemEnvironment?.template && (
-          <div className="hidden">{ensureSimpleInit()}</div>
-        )}
+
 
         {renderSimpleList('frontend_lang', 'Frontend Interface Language')}
         {renderSimpleList('app_info', 'Application Information')}
@@ -306,11 +417,11 @@ export default function ProposalBuilderPage() {
             <div className="col-span-6 font-bold text-gray-600">Condition</div>
             <div className="col-span-1"></div>
             {g.items.map((it, ii) => (
-              <>
+              <Fragment key={`${keyName}-${gi}-${ii}`}>
                 <div className="col-span-5"><input value={it.name} onChange={e=> setContent(c=> ({...c, [keyName]: c[keyName].map((x,i)=> i!==gi?x:{...x, items: x.items.map((y,j)=> j!==ii?y:{...y, name:e.target.value})})}))} className="w-full border border-gray-300 rounded p-2" /></div>
                 <div className="col-span-6"><textarea value={it.condition||''} onChange={e=> setContent(c=> ({...c, [keyName]: c[keyName].map((x,i)=> i!==gi?x:{...x, items: x.items.map((y,j)=> j!==ii?y:{...y, condition:e.target.value})})}))} className="w-full border border-gray-300 rounded p-2" rows={2} /></div>
                 <div className="col-span-1 flex items-center justify-end"><button onClick={()=>removeItem(keyName, gi, ii)} className="text-gray-500">✕</button></div>
-              </>
+              </Fragment>
             ))}
             <div className="col-span-12">
               <button onClick={()=>addItem(keyName, gi)} className="px-3 py-1 text-sm rounded border border-gray-300">+ Feature</button>
@@ -341,7 +452,7 @@ export default function ProposalBuilderPage() {
           </thead>
           <tbody>
             {content.financialBreakdown.map((sec, si) => (
-              <>
+              <Fragment key={`fb-section-${si}`}>
                 <tr key={`sec-${si}`}>
                   <td colSpan={7} className="pt-4 pb-2">
                     <div className="flex items-center">
@@ -364,7 +475,7 @@ export default function ProposalBuilderPage() {
                 <tr>
                   <td colSpan={7} className="py-2"><button onClick={()=>addFbItem(si)} className="px-3 py-1 text-sm border border-gray-300 rounded">+ Item</button></td>
                 </tr>
-              </>
+              </Fragment>
             ))}
           </tbody>
         </table>
