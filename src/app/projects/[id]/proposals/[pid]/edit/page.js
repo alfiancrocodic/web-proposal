@@ -51,8 +51,18 @@ export default function ProposalBuilderPage() {
           const leftKey = hasEngine ? 'engine' : (hasFramework ? 'framework' : null);
           const rows = (section?.rows||[]).map((r)=>{
             if (!leftKey) return { ...r };
-            const engines = Array.isArray(r.values?.[leftKey]) ? r.values[leftKey] : [];
-            const langs = Array.isArray(r.values?.programming_language) ? r.values.programming_language : [];
+            const toArray = (val) => {
+              if (Array.isArray(val)) return val;
+              if (typeof val === 'string') {
+                // try JSON array
+                try { const parsed = JSON.parse(val); if (Array.isArray(parsed)) return parsed; } catch {}
+                // fallback comma separated
+                return val.split(',').map(s=>s.trim()).filter(Boolean);
+              }
+              return [];
+            };
+            const engines = toArray(r.values?.[leftKey]);
+            const langs = toArray(r.values?.programming_language);
             const existingPairs = Array.isArray(r.pairs) ? r.pairs : [];
             const max = Math.max(engines.length, langs.length);
             const pairs = Array.from({length:max}).map((_,i)=>({
@@ -111,24 +121,43 @@ export default function ProposalBuilderPage() {
                   const hasPairs = pairs.length > 0;
                   return (
                     <tr key={idx} className="hover:bg-gray-50 align-top">
-                      {cols.map(c => (
-                        <td key={c.key} className="py-2 px-2 align-top">
-                          {Array.isArray(row.values?.[c.key]) ? (
-                            <div className="flex flex-col gap-1">
-                              {row.values[c.key].map((v,i)=>(<div key={i} className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full inline-block w-fit">{v}</div>))}
-                            </div>
-                          ) : (
-                            <div>{row.values?.[c.key] || ''}</div>
-                          )}
-                        </td>
-                      ))}
+                    {cols.map(c => (
+                      <td key={c.key} className="py-2 px-2 align-top">
+                        {(() => {
+                          const val = row.values?.[c.key];
+                          const toArray = (v) => {
+                            if (Array.isArray(v)) return v;
+                            if (typeof v === 'string') {
+                              // coba parse JSON array; jika gagal, gunakan comma-separated
+                              try { const parsed = JSON.parse(v); if (Array.isArray(parsed)) return parsed; } catch {}
+                              return v.split(',').map(s=>s.trim()).filter(Boolean);
+                            }
+                            return null;
+                          };
+                          const arr = toArray(val);
+                          if (arr && arr.length) {
+                            return (
+                              <div className="flex flex-col gap-1">
+                                {arr.map((v,i)=>(
+                                  <div key={i} className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full inline-block w-fit">{v}</div>
+                                ))}
+                              </div>
+                            );
+                          }
+                          return <div>{val || ''}</div>;
+                        })()}
+                      </td>
+                    ))}
                       <td className="py-2 px-2 text-center">
                         {hasPairs ? (
                           <div className="flex flex-col items-center gap-2">
                             {pairs.map((p,i)=>(
-                              <label key={i} className="inline-flex items-center gap-2">
-                                <input type="checkbox" checked={!!p.checked} onChange={(e)=> setContent(c=> ({...c, systemEnvironment: { ...c.systemEnvironment, [setKey]: { ...c.systemEnvironment[setKey], rows: c.systemEnvironment[setKey].rows.map((r,ri)=> ri!==idx? r : { ...r, pairs: r.pairs.map((pp,pi)=> pi!==i? pp : { ...pp, checked: e.target.checked }) }) } }}))} />
-                              </label>
+                              <input
+                                key={i}
+                                type="checkbox"
+                                checked={!!p.checked}
+                                onChange={(e)=> setContent(c=> ({...c, systemEnvironment: { ...c.systemEnvironment, [setKey]: { ...c.systemEnvironment[setKey], rows: c.systemEnvironment[setKey].rows.map((r,ri)=> ri!==idx? r : { ...r, pairs: r.pairs.map((pp,pi)=> pi!==i? pp : { ...pp, checked: e.target.checked }) }) } }}))}
+                              />
                             ))}
                           </div>
                         ) : (
