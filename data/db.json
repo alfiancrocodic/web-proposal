@@ -138,6 +138,12 @@
       "projectId": "p-1",
       "version": 7,
       "createdAt": "2025-09-13T12:47:13.394Z"
+    },
+    {
+      "id": "pr-nrp7p4t",
+      "projectId": "p-1",
+      "version": 8,
+      "createdAt": "2025-09-13T15:41:28.805Z"
     }
   ],
   "proposalContents": [

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { getProposalTemplates, getProposalContent, putProposalContent } from '@/lib/api';
 
 const DEFAULT_CONTENT = {
   systemEnvironment: { platforms: [], notes: '' },
@@ -36,11 +37,46 @@ export default function ProposalBuilderPage() {
     if (!projectId || !pid) return;
     fetch(`/api/projects/${projectId}`).then(r=>r.json()).then(setProject);
     fetch(`/api/proposals/${pid}`).then(r=>r.json()).then(setProposal);
-    fetch(`/api/proposals/${pid}/content`).then(r=>r.json()).then((d)=> setContent({ ...DEFAULT_CONTENT, ...d }));
+    (async () => {
+      const d = await getProposalContent(pid);
+      const next = { ...DEFAULT_CONTENT, ...d };
+      try {
+        const tpl = await getProposalTemplates();
+        const mobile = tpl?.complex?.mobile_env;
+        const web = tpl?.complex?.web_env;
+        const buildWithPairs = (section) => {
+          const cols = section?.columns || [];
+          const hasEngine = cols.some(c=>c.key==='engine');
+          const hasFramework = cols.some(c=>c.key==='framework');
+          const leftKey = hasEngine ? 'engine' : (hasFramework ? 'framework' : null);
+          const rows = (section?.rows||[]).map((r)=>{
+            if (!leftKey) return { ...r };
+            const engines = Array.isArray(r.values?.[leftKey]) ? r.values[leftKey] : [];
+            const langs = Array.isArray(r.values?.programming_language) ? r.values.programming_language : [];
+            const existingPairs = Array.isArray(r.pairs) ? r.pairs : [];
+            const max = Math.max(engines.length, langs.length);
+            const pairs = Array.from({length:max}).map((_,i)=>({
+              engine: engines[i] || '',
+              language: langs[i] || '',
+              checked: existingPairs[i]?.checked || false,
+            }));
+            return { ...r, pairs };
+          });
+          return { rows, columns: section?.columns||[], footnotes: section?.footnotes||[], leftKey };
+        };
+        next.systemEnvironment = {
+          ...next.systemEnvironment,
+          template: { mobile, web, simple: tpl?.simple },
+          mobile: next.systemEnvironment?.mobile || buildWithPairs(mobile),
+          web: next.systemEnvironment?.web || buildWithPairs(web),
+        };
+      } catch(e) {}
+      setContent(next);
+    })();
   }, [router, projectId, pid]);
 
   const save = async () => {
-    await fetch(`/api/proposals/${pid}/content`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(content) });
+    await putProposalContent(pid, content);
     router.push(`/projects/${projectId}`);
   };
 
@@ -52,23 +88,165 @@ export default function ProposalBuilderPage() {
   const addFbItem = (si) => setContent(c => ({ ...c, financialBreakdown: c.financialBreakdown.map((s,i)=> i!==si? s: { ...s, items: [...s.items, { activity: 'Activity', resource: 'Resource', quantity: 1, mandays: 0, price: 0, parallel: false, hide: false }]}) }));
   const currency = (n) => new Intl.NumberFormat('id-ID').format(+n||0);
 
-  const TabSystem = () => (
-    <div className="space-y-4">
-      <div>
-        <p className="text-sm text-gray-700 mb-2">Platforms</p>
-        <div className="flex flex-wrap gap-2">
-          {['Android Phone', 'Android Tablet', 'iOS iPhone', 'iOS iPad', 'Web Backend', 'Web Frontend'].map(p => (
-            <button type="button" key={p} onClick={()=> setContent(c=> ({...c, systemEnvironment: { ...c.systemEnvironment, platforms: c.systemEnvironment.platforms.includes(p) ? c.systemEnvironment.platforms.filter(x=>x!==p) : [...c.systemEnvironment.platforms, p] }}))}
-              className={`px-3 py-1 text-sm rounded-full border ${content.systemEnvironment.platforms.includes(p) ? 'bg-blue-50 border-blue-400 text-blue-700' : 'border-gray-300 hover:bg-gray-50'}`}>{p}</button>
-          ))}
+  const TabSystem = () => {
+    const mobile = content.systemEnvironment?.mobile;
+    const web = content.systemEnvironment?.web;
+    const simple = content.systemEnvironment?.simple;
+    const renderTable = (data, setKey) => {
+      if (!data) return null;
+      const cols = data.columns || [];
+      return (
+        <div className="space-y-2">
+          <div className="overflow-x-auto bg-white p-4 rounded-lg border">
+            <table className="w-full text-sm">
+              <thead className="text-xs text-gray-700 uppercase">
+                <tr>
+                  {cols.map(c => (<th key={c.key} className="py-3 px-2 text-left">{c.label}</th>))}
+                  <th className="py-3 px-2 text-center">Checklist</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.rows?.map((row, idx) => {
+                  const pairs = Array.isArray(row.pairs) ? row.pairs : [];
+                  const hasPairs = pairs.length > 0;
+                  return (
+                    <tr key={idx} className="hover:bg-gray-50 align-top">
+                      {cols.map(c => (
+                        <td key={c.key} className="py-2 px-2 align-top">
+                          {Array.isArray(row.values?.[c.key]) ? (
+                            <div className="flex flex-col gap-1">
+                              {row.values[c.key].map((v,i)=>(<div key={i} className="bg-gray-100 text-gray-800 text-xs font-medium px-2.5 py-0.5 rounded-full inline-block w-fit">{v}</div>))}
+                            </div>
+                          ) : (
+                            <div>{row.values?.[c.key] || ''}</div>
+                          )}
+                        </td>
+                      ))}
+                      <td className="py-2 px-2 text-center">
+                        {hasPairs ? (
+                          <div className="flex flex-col items-center gap-2">
+                            {pairs.map((p,i)=>(
+                              <label key={i} className="inline-flex items-center gap-2">
+                                <input type="checkbox" checked={!!p.checked} onChange={(e)=> setContent(c=> ({...c, systemEnvironment: { ...c.systemEnvironment, [setKey]: { ...c.systemEnvironment[setKey], rows: c.systemEnvironment[setKey].rows.map((r,ri)=> ri!==idx? r : { ...r, pairs: r.pairs.map((pp,pi)=> pi!==i? pp : { ...pp, checked: e.target.checked }) }) } }}))} />
+                              </label>
+                            ))}
+                          </div>
+                        ) : (
+                          <input type="checkbox" checked={!!row.checked} onChange={(e)=> setContent(c=> ({...c, systemEnvironment: { ...c.systemEnvironment, [setKey]: { ...c.systemEnvironment[setKey], rows: c.systemEnvironment[setKey].rows.map((r,i)=> i!==idx? r : { ...r, checked: e.target.checked }) } }}))} />
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
+      );
+    };
+
+    const ensureSimpleInit = () => {
+      if (content.systemEnvironment?.simple) return;
+      const tpl = content.systemEnvironment?.template;
+      const init = (arr) => (arr || []).map(opt => ({ label: opt.label, is_other: !!opt.is_other, checked: false, otherText: '' }));
+      setContent(c => ({
+        ...c,
+        systemEnvironment: {
+          ...c.systemEnvironment,
+          simple: {
+            frontend_lang: init(tpl?.simple?.frontend_lang),
+            app_info: init(tpl?.simple?.app_info),
+            account_availability: init(tpl?.simple?.account_availability),
+            db_availability: init(tpl?.simple?.db_availability),
+            db_info: init(tpl?.simple?.db_info),
+          }
+        }
+      }));
+    };
+
+    const renderSimpleList = (key, title) => {
+      const list = (content.systemEnvironment?.simple || {})[key] || [];
+      if (!list.length) return null;
+      return (
+        <div className="bg-white p-4 rounded-lg border">
+          <h3 className="font-semibold mb-3">{title}</h3>
+          <div className="space-y-2">
+            {list.map((item, idx) => (
+              <div key={idx} className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  checked={!!item.checked}
+                  onChange={(e)=> setContent(c=> ({
+                    ...c,
+                    systemEnvironment: {
+                      ...c.systemEnvironment,
+                      simple: {
+                        ...c.systemEnvironment.simple,
+                        [key]: c.systemEnvironment.simple[key].map((it,i)=> i!==idx ? it : { ...it, checked: e.target.checked })
+                      }
+                    }
+                  }))}
+                  className="mt-1"
+                />
+                <div className="flex-1">
+                  <div className="text-sm text-gray-800">{item.label}</div>
+                  {item.is_other && item.checked && (
+                    <input
+                      placeholder="Please specify..."
+                      value={item.otherText || ''}
+                      onChange={(e)=> setContent(c=> ({
+                        ...c,
+                        systemEnvironment: {
+                          ...c.systemEnvironment,
+                          simple: {
+                            ...c.systemEnvironment.simple,
+                            [key]: c.systemEnvironment.simple[key].map((it,i)=> i!==idx ? it : { ...it, otherText: e.target.value })
+                          }
+                        }
+                      }))}
+                      className="mt-1 w-full border border-gray-300 rounded p-2 text-sm"
+                    />
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
+    return (
+      <div className="space-y-6">
+        <div>
+          <h3 className="font-semibold mb-2">Mobile System Environment</h3>
+          {renderTable(mobile, 'mobile')}
+          {mobile?.footnotes?.length ? (
+            <ul className="text-xs text-gray-500 list-disc ml-5 mt-2">
+              {mobile.footnotes.map((f,i)=>(<li key={i}>{f}</li>))}
+            </ul>
+          ) : null}
+        </div>
+        <div>
+          <h3 className="font-semibold mb-2">Web System Environment</h3>
+          {renderTable(web, 'web')}
+          {web?.footnotes?.length ? (
+            <ul className="text-xs text-gray-500 list-disc ml-5 mt-2">
+              {web.footnotes.map((f,i)=>(<li key={i}>{f}</li>))}
+            </ul>
+          ) : null}
+        </div>
+
+        {!simple && content.systemEnvironment?.template && (
+          <div className="hidden">{ensureSimpleInit()}</div>
+        )}
+
+        {renderSimpleList('frontend_lang', 'Frontend Interface Language')}
+        {renderSimpleList('app_info', 'Application Information')}
+        {renderSimpleList('account_availability', 'Account Availability')}
+        {renderSimpleList('db_availability', 'Database Availability')}
+        {renderSimpleList('db_info', 'Database Information')}
       </div>
-      <div>
-        <p className="text-sm text-gray-700 mb-2">Notes</p>
-        <textarea value={content.systemEnvironment.notes} onChange={e=> setContent(c=> ({...c, systemEnvironment: { ...c.systemEnvironment, notes: e.target.value }}))} className="w-full border border-gray-300 rounded p-2" rows={4} />
-      </div>
-    </div>
-  );
+    );
+  };
 
   const TabFeatures = ({keyName}) => (
     <div className="space-y-4">
@@ -231,4 +409,3 @@ export default function ProposalBuilderPage() {
     </div>
   );
 }
-

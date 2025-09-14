@@ -3,37 +3,21 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
-
-// Interface untuk data client
-interface Client {
-  id: string;
-  company: string;
-  picName: string;
-}
+import { 
+  getProject, 
+  getClient, 
+  getProposals, 
+  createProposal,
+  Project, 
+  Client, 
+  Proposal 
+} from '@/lib/api';
 
 // Interface untuk role dalam project
 interface Role {
   name: string;
   platforms: string[];
   platform?: string; // untuk backward compatibility
-}
-
-// Interface untuk data project
-interface Project {
-  id: string;
-  name: string;
-  clientId: string;
-  createdAt: string;
-  analyst: string;
-  grade: string;
-  roles: (Role | string)[];
-}
-
-// Interface untuk data proposal
-interface Proposal {
-  id: string;
-  version: number;
-  createdAt: string;
 }
 
 /**
@@ -49,21 +33,49 @@ export default function ProjectDetailsPage(): React.JSX.Element {
   const [proposals, setProposals] = useState<Proposal[]>([]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('auth')) router.replace('/login');
+    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
+      router.replace('/login');
+      return;
+    }
     if (!id) return;
-    fetch(`/api/projects/${id}`).then(r=>r.json()).then(setProject);
-    fetch('/api/clients').then(r=>r.json()).then(cs => setClient(cs.find((c: Client)=>c.id===project?.clientId)));
-    fetch(`/api/projects/${id}/proposals`).then(r=>r.json()).then(setProposals);
-  }, [router, id, project?.clientId]);
+    
+    const loadData = async () => {
+      try {
+        const projectData = await getProject(id as any);
+        setProject(projectData);
+        
+        if (projectData.client_id) {
+          const clientData = await getClient(projectData.client_id as any);
+          setClient(clientData);
+        }
+        
+        const proposalsData = await getProposals();
+        // Filter proposals untuk project ini
+        const projectProposals = proposalsData.filter((p: any) => p.project_id == id);
+        setProposals(projectProposals);
+      } catch (error) {
+        console.error('Error loading project data:', error);
+      }
+    };
+    
+    loadData();
+  }, [router, id]);
 
   /**
    * Fungsi untuk membuat proposal baru
    */
-  const createProposal = async (): Promise<void> => {
-    const res = await fetch(`/api/projects/${id}/proposals`, { method: 'POST' });
-    if (res.ok) {
-      const pr: Proposal = await res.json();
-      router.push(`/projects/${id}/proposals/${pr.id}/edit`);
+  const handleCreateProposal = async (): Promise<void> => {
+    try {
+      const proposalData = {
+        project_id: id as any,
+        version: String(proposals.length + 1)
+      };
+      
+      const newProposal = await createProposal(proposalData);
+      router.push(`/projects/${id}/proposals/${newProposal.id}/edit`);
+    } catch (error) {
+      console.error('Error creating proposal:', error);
+      alert('Gagal membuat proposal. Silakan coba lagi.');
     }
   };
 
@@ -90,7 +102,7 @@ export default function ProjectDetailsPage(): React.JSX.Element {
             <div className="grid grid-cols-2 gap-y-4 gap-x-2 text-sm">
               <div>
                 <p className="text-gray-500">Created Date</p>
-                <p className="font-medium text-gray-800">{new Date(project.createdAt).toLocaleDateString()}</p>
+                <p className="font-medium text-gray-800">{project.createdAt ? new Date(project.createdAt).toLocaleDateString() : 'N/A'}</p>
               </div>
               <div>
                 <p className="text-gray-500">Analyst</p>
@@ -151,7 +163,7 @@ export default function ProjectDetailsPage(): React.JSX.Element {
                 <button className="p-2 rounded-md border hover:bg-gray-100" title="More actions">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                 </button>
-                <button onClick={createProposal} className="text-sm bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2">
+                <button onClick={handleCreateProposal} className="text-sm bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2">
                   <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
                   Create Proposal
                 </button>
@@ -170,7 +182,7 @@ export default function ProjectDetailsPage(): React.JSX.Element {
                   {proposals.map((item) => (
                     <tr key={item.id} className="bg-white border-b border-gray-200">
                       <td className="px-4 py-3 font-medium text-gray-900">Version {item.version}</td>
-                      <td className="px-4 py-3">{new Date(item.createdAt).toLocaleDateString()}</td>
+                      <td className="px-4 py-3">{item.created_at ? new Date(item.created_at).toLocaleDateString() : 'N/A'}</td>
                       <td className="px-4 py-3">
                         <button className="font-medium text-blue-600 hover:underline" onClick={()=>router.push(`/projects/${id}/proposals/${item.id}/edit`)}>Open</button>
                       </td>

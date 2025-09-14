@@ -232,3 +232,369 @@ export const registerUser = async (userData: {
 
   return response.json();
 };
+
+// ===== CLIENT API FUNCTIONS =====
+
+/**
+ * Interface untuk data client
+ */
+export interface Client {
+  id: number;
+  company: string;
+  location: string;
+  badanUsaha: string;
+  picName: string;
+  position: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Interface untuk form data client
+ */
+export interface ClientFormData {
+  company: string;
+  location: string;
+  badanUsaha: string;
+  picName: string;
+  position: string;
+}
+
+/**
+ * Fungsi untuk mendapatkan semua client dari backend
+ * @returns Promise dengan array client
+ */
+export const getClients = async (): Promise<Client[]> => {
+  const response = await apiCall('/api/clients');
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengambil data client');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk mendapatkan client berdasarkan ID
+ * @param id - ID client
+ * @returns Promise dengan data client
+ */
+export const getClient = async (id: number): Promise<Client> => {
+  const response = await apiCall(`/api/clients/${id}`);
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengambil data client');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk membuat client baru
+ * @param clientData - Data client yang akan dibuat
+ * @returns Promise dengan client yang dibuat
+ */
+export const createClient = async (clientData: ClientFormData): Promise<Client> => {
+  const response = await apiCall('/api/clients', {
+    method: 'POST',
+    body: JSON.stringify(clientData),
+  });
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal membuat client');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk update client
+ * @param id - ID client
+ * @param clientData - Data client yang akan diupdate
+ * @returns Promise dengan client yang diupdate
+ */
+export const updateClient = async (id: number, clientData: ClientFormData): Promise<Client> => {
+  const response = await apiCall(`/api/clients/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(clientData),
+  });
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengupdate client');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk menghapus client
+ * @param id - ID client
+ * @returns Promise void
+ */
+export const deleteClient = async (id: number): Promise<void> => {
+  const response = await apiCall(`/api/clients/${id}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal menghapus client');
+  }
+};
+
+// ===== PROJECT API FUNCTIONS =====
+
+/**
+ * Interface untuk data project
+ */
+export interface Project {
+  id: number;
+  client_id: number;
+  name: string;
+  analyst: string;
+  grade: string;
+  roles: string[];
+  client?: Client;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Interface untuk form data project
+ */
+export interface ProjectFormData {
+  client_id: number;
+  name: string;
+  analyst: string;
+  grade: string;
+  roles: string[];
+}
+
+/**
+ * Fungsi untuk mendapatkan semua project dari backend
+ * @returns Promise dengan array project
+ */
+export const getProjects = async (): Promise<Project[]> => {
+  const response = await apiCall('/api/projects');
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengambil data project');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk mendapatkan project berdasarkan ID
+ * @param id - ID project
+ * @returns Promise dengan data project
+ */
+export const getProject = async (id: number): Promise<Project> => {
+  const response = await apiCall(`/api/projects/${id}`);
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengambil data project');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk membuat project baru
+ * @param projectData - Data project yang akan dibuat
+ * @returns Promise dengan project yang dibuat
+ */
+export const createProject = async (projectData: ProjectFormData): Promise<Project> => {
+  const response = await apiCall('/api/projects', {
+    method: 'POST',
+    body: JSON.stringify(projectData),
+  });
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal membuat project');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk update project
+ * @param id - ID project
+ * @param projectData - Data project yang akan diupdate
+ * @returns Promise dengan project yang diupdate
+ */
+export const updateProject = async (id: number, projectData: ProjectFormData): Promise<Project> => {
+  const response = await apiCall(`/api/projects/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(projectData),
+  });
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengupdate project');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk menghapus project
+ * @param id - ID project
+ * @returns Promise void
+ */
+export const deleteProject = async (id: number): Promise<void> => {
+  const response = await apiCall(`/api/projects/${id}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal menghapus project');
+  }
+};
+
+// ===== PROPOSAL API FUNCTIONS =====
+
+/**
+ * Interface untuk data proposal
+ */
+export interface Proposal {
+  id: number;
+  project_id: number;
+  version: string;
+  project?: Project;
+  created_at?: string;
+  updated_at?: string;
+}
+
+/**
+ * Interface untuk form data proposal
+ */
+export interface ProposalFormData {
+  project_id: number;
+  version: string;
+}
+
+/**
+ * Fungsi untuk mendapatkan semua proposal dari backend
+ * @returns Promise dengan array proposal
+ */
+export const getProposals = async (): Promise<Proposal[]> => {
+  const response = await apiCall('/api/proposals');
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengambil data proposal');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk mendapatkan proposal berdasarkan ID
+ * @param id - ID proposal
+ * @returns Promise dengan data proposal
+ */
+export const getProposal = async (id: number): Promise<Proposal> => {
+  const response = await apiCall(`/api/proposals/${id}`);
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengambil data proposal');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk membuat proposal baru
+ * @param proposalData - Data proposal yang akan dibuat
+ * @returns Promise dengan proposal yang dibuat
+ */
+export const createProposal = async (proposalData: ProposalFormData): Promise<Proposal> => {
+  const response = await apiCall('/api/proposals', {
+    method: 'POST',
+    body: JSON.stringify(proposalData),
+  });
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal membuat proposal');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk update proposal
+ * @param id - ID proposal
+ * @param proposalData - Data proposal yang akan diupdate
+ * @returns Promise dengan proposal yang diupdate
+ */
+export const updateProposal = async (id: number, proposalData: ProposalFormData): Promise<Proposal> => {
+  const response = await apiCall(`/api/proposals/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(proposalData),
+  });
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengupdate proposal');
+  }
+  
+  return response.json();
+};
+
+/**
+ * Fungsi untuk menghapus proposal
+ * @param id - ID proposal
+ * @returns Promise void
+ */
+export const deleteProposal = async (id: number): Promise<void> => {
+  const response = await apiCall(`/api/proposals/${id}`, {
+    method: 'DELETE',
+  });
+  
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal menghapus proposal');
+  }
+};
+
+// ===== PROPOSAL BUILDER TEMPLATE & CONTENT =====
+
+export const getProposalTemplates = async (): Promise<any> => {
+  const response = await apiCall('/api/proposal/templates');
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal mengambil template proposal');
+  }
+  return response.json();
+};
+
+export const getProposalContent = async (proposalId: number | string): Promise<any> => {
+  const response = await apiCall(`/api/proposals/${proposalId}/content`);
+  if (!response.ok) {
+    // jika belum ada content, backend akan kembalikan {} / 200
+    try { return await response.json(); } catch { return {}; }
+  }
+  return response.json();
+};
+
+export const putProposalContent = async (proposalId: number | string, data: any): Promise<void> => {
+  const response = await apiCall(`/api/proposals/${proposalId}/content`, {
+    method: 'PUT',
+    body: JSON.stringify({ data }),
+  });
+  if (!response.ok) {
+    const errorData: ApiError = await response.json();
+    throw new Error(errorData.message || 'Gagal menyimpan content proposal');
+  }
+};

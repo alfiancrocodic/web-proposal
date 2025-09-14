@@ -18,7 +18,7 @@ function Breadcrumbs({ crumbs = [] }: BreadcrumbsProps): React.JSX.Element {
         {crumbs.map((crumb, i) => (
           <li key={i} className="inline-flex items-center gap-2">
             {i > 0 && (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" data-testid="chevron-icon">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
               </svg>
             )}

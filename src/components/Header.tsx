@@ -26,7 +26,15 @@ function Header(): React.JSX.Element {
     if (typeof window !== 'undefined') {
       const userData = localStorage.getItem('user');
       if (userData) {
-        setUser(JSON.parse(userData));
+        try {
+          setUser(JSON.parse(userData));
+        } catch (error) {
+          console.error('Error parsing user data from localStorage:', error);
+          // Hapus data yang corrupt dari localStorage
+          localStorage.removeItem('user');
+          localStorage.removeItem('auth_token');
+          setUser(null);
+        }
       }
     }
   }, []);

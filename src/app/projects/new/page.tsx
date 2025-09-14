@@ -4,6 +4,8 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import React from 'react';
+import { getClients, createProject, Client, ProjectFormData } from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 /**
  * Array platform yang tersedia
@@ -29,14 +31,7 @@ const PLATFORM_COLORS: Record<string, string> = {
   'Web Frontend': 'bg-cyan-100 text-cyan-800',
 };
 
-/**
- * Interface untuk data client
- */
-interface Client {
-  id: string;
-  company: string;
-  picName: string;
-}
+
 
 /**
  * Interface untuk role dalam project
@@ -50,7 +45,7 @@ interface Role {
  * Interface untuk form data project
  */
 interface ProjectForm {
-  clientId: string;
+  client_id: string;
   name: string;
   analyst: string;
   grade: string;
@@ -64,20 +59,32 @@ interface ProjectForm {
 export default function NewProjectPage(): React.JSX.Element {
   const router = useRouter();
   const sp = useSearchParams();
+  const { showError, showWarning, ToastContainer } = useToast();
   const [clients, setClients] = useState<Client[]>([]);
-  const [form, setForm] = useState<ProjectForm>({ clientId: '', name: '', analyst: '', grade: 'A', roles: [] });
+  const [form, setForm] = useState<ProjectForm>({ client_id: '', name: '', analyst: '', grade: 'A', roles: [] });
   const [showRoleModal, setShowRoleModal] = useState<boolean>(false);
   const [roleName, setRoleName] = useState<string>('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [editRoleIndex, setEditRoleIndex] = useState<number | null>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) router.replace('/login');
-    fetch('/api/clients').then(r=>r.json()).then(data => {
-      setClients(data);
-      const cid = sp.get('clientId');
-      setForm(f => ({ ...f, clientId: cid || (data[0]?.id || '') }));
-    });
+    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
+      router.replace('/login');
+      return;
+    }
+    
+    const loadClients = async () => {
+      try {
+        const clientsData = await getClients();
+        setClients(clientsData);
+        const cid = sp.get('clientId');
+        setForm(f => ({ ...f, client_id: cid || (clientsData[0]?.id?.toString() || '') }));
+      } catch (error) {
+        console.error('Error loading clients:', error);
+      }
+    };
+    
+    loadClients();
   }, [router, sp]);
 
   /**
@@ -130,12 +137,55 @@ export default function NewProjectPage(): React.JSX.Element {
   };
 
   /**
+   * Fungsi untuk validasi form sebelum submit
+   * @returns Object dengan status valid dan pesan error
+   */
+  const validateForm = (): { isValid: boolean; message: string } => {
+    if (!form.client_id) {
+      return { isValid: false, message: 'Silakan pilih Company Name terlebih dahulu.' };
+    }
+    if (!form.name.trim()) {
+      return { isValid: false, message: 'Project Name tidak boleh kosong.' };
+    }
+    if (!form.analyst) {
+      return { isValid: false, message: 'Silakan pilih Analyst terlebih dahulu.' };
+    }
+    if (!form.grade) {
+      return { isValid: false, message: 'Silakan pilih Project Grade terlebih dahulu.' };
+    }
+    if (form.roles.length === 0) {
+      return { isValid: false, message: 'Silakan tambahkan minimal satu User Role.' };
+    }
+    return { isValid: true, message: '' };
+  };
+
+  /**
    * Fungsi untuk submit form project
    */
   const submit = async (): Promise<void> => {
-    const res = await fetch('/api/projects', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-    const p = await res.json();
-    if (res.ok) router.push(`/projects/${p.id}`);
+    // Validasi form terlebih dahulu
+    const validation = validateForm();
+    if (!validation.isValid) {
+      showWarning(validation.message);
+      return;
+    }
+
+    try {
+      const projectData: ProjectFormData = {
+        client_id: Number(form.client_id),
+        name: form.name,
+        analyst: form.analyst,
+        grade: form.grade,
+        roles: form.roles.map(role => role.name)
+      };
+      
+      const newProject = await createProject(projectData);
+      router.push(`/projects/${newProject.id}`);
+    } catch (error) {
+      console.error('Error creating project:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Gagal membuat project. Silakan coba lagi.';
+      showError(errorMessage);
+    }
   };
 
   return (
@@ -169,13 +219,13 @@ export default function NewProjectPage(): React.JSX.Element {
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Company Name</label>
-                <select value={form.clientId} onChange={e=>setForm({...form, clientId:e.target.value})} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5">
+                <select value={form.client_id} onChange={e=>setForm({...form, client_id:e.target.value})} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5">
                   {clients.map(c => <option key={c.id} value={c.id}>{c.company}</option>)}
                 </select>
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">PIC Name</label>
-                <input value={clients.find(c=>c.id===form.clientId)?.picName || ''} disabled className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
+                <input value={clients.find(c=>String(c.id)==form.client_id)?.picName || ''} disabled className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Project Name</label>
@@ -266,6 +316,7 @@ export default function NewProjectPage(): React.JSX.Element {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 }

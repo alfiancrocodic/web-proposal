@@ -3,29 +3,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import React from 'react';
-
-/**
- * Interface untuk data client
- */
-interface Client {
-  id: string;
-  company: string;
-  location: string;
-  badanUsaha: string;
-  picName: string;
-  position: string;
-}
-
-/**
- * Interface untuk data project
- */
-interface Project {
-  id: string;
-  name: string;
-  clientId: string;
-  analyst: string;
-  grade: string;
-}
+import { 
+  getClients, 
+  getProjects, 
+  createClient, 
+  Client, 
+  Project, 
+  ClientFormData 
+} from '@/lib/api';
+import { useToast } from '@/components/Toast';
 
 /**
  * Interface untuk form data client
@@ -50,14 +36,30 @@ export default function Home(): React.JSX.Element {
   const [showConfirm, setShowConfirm] = useState<boolean>(false);
   const [newClient, setNewClient] = useState<Client | null>(null);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const { showError, ToastContainer } = useToast();
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
       router.replace('/login');
       return;
     }
-    fetch('/api/clients').then(r => r.json()).then(setClients);
-    fetch('/api/projects').then(r => r.json()).then(setProjects);
+    
+    // Load data dari backend
+    const loadData = async () => {
+      try {
+        const [clientsData, projectsData] = await Promise.all([
+          getClients(),
+          getProjects()
+        ]);
+        setClients(clientsData);
+        setProjects(projectsData);
+      } catch (error) {
+        console.error('Error loading data:', error);
+      }
+    };
+    
+    loadData();
   }, [router]);
 
   /**
@@ -74,12 +76,26 @@ export default function Home(): React.JSX.Element {
    */
   const saveClient = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
     e.preventDefault();
-    const res = await fetch('/api/clients', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-    const c: Client = await res.json();
-    if (res.ok) {
-      setNewClient(c);
+    try {
+      const clientData: ClientFormData = {
+        company: form.company,
+        location: form.location,
+        badanUsaha: form.badanUsaha,
+        picName: form.picName,
+        position: form.position
+      };
+      
+      const newClientData = await createClient(clientData);
+      setNewClient(newClientData);
       setShowConfirm(true);
-      setClients((prev: Client[]) => [c, ...prev]);
+      setClients((prev: Client[]) => [newClientData, ...prev]);
+      
+      // Reset form
+      setForm({ company: '', location: '', badanUsaha: 'Swasta', picName: '', position: '' });
+    } catch (error) {
+      console.error('Error creating client:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Gagal membuat client. Silakan coba lagi.';
+      showError(errorMessage);
     }
   };
 
@@ -169,7 +185,13 @@ export default function Home(): React.JSX.Element {
           </div>
           {/* Search below header, full width */}
           <div className="relative mb-4">
-            <input type="text" placeholder="Search client name, project name, company..." className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white placeholder-gray-400" />
+            <input 
+              type="text" 
+              placeholder="Search client name, project name, company..." 
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white placeholder-gray-400"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             </div>
@@ -181,7 +203,7 @@ export default function Home(): React.JSX.Element {
                   <span className="text-xs font-semibold bg-green-100 text-green-800 px-2 py-0.5 rounded-full">Grade Project {p.grade}</span>
                 </div>
                 <h3 className="font-bold text-lg mt-2">{p.name}</h3>
-                <p className="text-sm text-gray-600">{clients.find(c=>c.id===p.clientId)?.company || ''}</p>
+                <p className="text-sm text-gray-600">{p.client?.company || clients.find(c=>c.id===p.client_id)?.company || ''}</p>
                 <p className="text-sm text-gray-500 mt-1">{p.analyst}</p>
                 <button onClick={()=>router.push(`/projects/${p.id}`)} className="mt-4 w-full text-blue-600 font-semibold text-sm flex items-center justify-center">
                   Details
@@ -226,24 +248,55 @@ export default function Home(): React.JSX.Element {
                 </tr>
               </thead>
               <tbody>
-                {[
-                  {date:'12 Jan 2023', pic:'Farid Nurhakim', position:'Business Analyst', company:'AXA Mandiri Finance Service', location:'Jakarta', category:'A'},
-                  {date:'10 Jan 2023', pic:'Budi', position:'CTO', company:'Test Co', location:'Bandung', category:'B'},
-                  {date:'08 Jan 2023', pic:'Sari', position:'Product Manager', company:'Acme Corp', location:'Surabaya', category:'A'},
-                  {date:'05 Jan 2023', pic:'Andi', position:'Founder', company:'Startup XYZ', location:'Jakarta', category:'C'},
-                ].map((client, index) => (
-                  <tr key={index} className="border-b border-gray-200">
-                    <td className="px-6 py-4">{client.date}</td>
-                    <td className="px-6 py-4 font-semibold">{client.pic}</td>
-                    <td className="px-6 py-4">{client.position}</td>
-                    <td className="px-6 py-4">{client.company}</td>
-                    <td className="px-6 py-4">{client.location}</td>
-                    <td className="px-6 py-4">{client.category}</td>
-                    <td className="px-6 py-4"><button className="text-yellow-500 hover:text-yellow-600 p-1" title="Edit">
-                      <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/></svg>
-                    </button></td>
-                  </tr>
-                ))}
+                {clients
+                  .filter((client: Client) => {
+                    if (!searchTerm) return true;
+                    const search = searchTerm.toLowerCase();
+                    return (
+                      client.company.toLowerCase().includes(search) ||
+                      client.picName.toLowerCase().includes(search) ||
+                      client.position.toLowerCase().includes(search) ||
+                      client.location.toLowerCase().includes(search)
+                    );
+                  })
+                  .slice(0, 10) // Limit to 10 recent clients
+                  .map((client: Client, index: number) => {
+                    // Format tanggal dari createdAt
+                    const formatDate = (dateString: string): string => {
+                      const date = new Date(dateString);
+                      return date.toLocaleDateString('id-ID', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric'
+                      });
+                    };
+
+                    // Tentukan category berdasarkan company atau default 'A'
+                    const getCategory = (company: string): string => {
+                      // Logic sederhana untuk menentukan category
+                      if (company.toLowerCase().includes('mandiri')) return 'A';
+                      if (company.toLowerCase().includes('crocodic')) return 'A';
+                      return 'B'; // Default category
+                    };
+
+                    return (
+                      <tr key={client.id} className="border-b border-gray-200">
+                        <td className="px-6 py-4">{formatDate(client.created_at || '')}</td>
+                        <td className="px-6 py-4 font-semibold">{client.picName || '-'}</td>
+                        <td className="px-6 py-4">{client.position || '-'}</td>
+                        <td className="px-6 py-4">{client.company}</td>
+                        <td className="px-6 py-4">{client.location}</td>
+                        <td className="px-6 py-4">{getCategory(client.company)}</td>
+                        <td className="px-6 py-4">
+                          <button className="text-yellow-500 hover:text-yellow-600 p-1" title="Edit">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/>
+                            </svg>
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
@@ -269,6 +322,7 @@ export default function Home(): React.JSX.Element {
           </div>
         </div>
       )}
+      <ToastContainer />
     </div>
   );
 }
