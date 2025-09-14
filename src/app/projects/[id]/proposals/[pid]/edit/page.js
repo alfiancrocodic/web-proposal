@@ -80,6 +80,22 @@ export default function ProposalBuilderPage() {
           mobile: next.systemEnvironment?.mobile || buildWithPairs(mobile),
           web: next.systemEnvironment?.web || buildWithPairs(web),
         };
+        if (!next.termsOfPayment || next.termsOfPayment.length === 0) {
+          const tp = tpl?.complex?.terms_payment;
+          if (tp?.rows?.length) {
+            next.termsOfPayment = tp.rows.map(r => ({
+              percentage: Number(r.values?.percentage ?? 0),
+              description: r.values?.description ?? '',
+              total: Number(r.values?.total ?? 0),
+            }));
+          }
+        }
+        if (!next.termsAndConditions || next.termsAndConditions.length === 0) {
+          const tc = tpl?.complex?.terms_conditions;
+          if (tc?.rows?.length) {
+            next.termsAndConditions = tc.rows.map(r => String(r.values?.term ?? ''));
+          }
+        }
       } catch(e) {}
       setContent(next);
     })();
@@ -358,34 +374,80 @@ export default function ProposalBuilderPage() {
 
   const TabPayment = () => (
     <div className="space-y-3">
-      <div className="grid grid-cols-12 gap-4 text-sm font-semibold">
-        <div className="col-span-2">Percentage (%)</div>
-        <div className="col-span-8">Description</div>
-        <div className="col-span-2 text-right">Total</div>
+      <div className="overflow-x-auto bg-white p-4 rounded-lg border">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-gray-700 uppercase">
+            <tr>
+              <th className="py-3 px-2 text-left w-12">No.</th>
+              <th className="py-3 px-2 text-left w-28">Percentage (%)</th>
+              <th className="py-3 px-2 text-left">Description</th>
+              <th className="py-3 px-2 text-right w-40">Total</th>
+              <th className="py-3 px-2 text-center w-12"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {content.termsOfPayment.map((t, i) => (
+              <tr key={i} className="hover:bg-gray-50">
+                <td className="py-2 px-2 align-top">{i + 1}</td>
+                <td className="py-2 px-2 align-top">
+                  <input type="number" value={t.percentage}
+                    onChange={e=> setContent(c=> ({...c, termsOfPayment: c.termsOfPayment.map((x,idx)=> idx!==i? x : { ...x, percentage: +e.target.value })}))}
+                    className="w-24 bg-gray-50 border rounded p-2" />
+                </td>
+                <td className="py-2 px-2">
+                  <input value={t.description}
+                    onChange={e=> setContent(c=> ({...c, termsOfPayment: c.termsOfPayment.map((x,idx)=> idx!==i? x : { ...x, description: e.target.value })}))}
+                    className="w-full bg-gray-50 border rounded p-2" />
+                </td>
+                <td className="py-2 px-2 text-right">
+                  <div className="flex items-center gap-1 justify-end">
+                    <span className="text-xs text-gray-500">Rp</span>
+                    <input type="number" value={t.total}
+                      onChange={e=> setContent(c=> ({...c, termsOfPayment: c.termsOfPayment.map((x,idx)=> idx!==i? x : { ...x, total: +e.target.value })}))}
+                      className="w-32 bg-gray-50 border rounded p-2 text-right" />
+                  </div>
+                </td>
+                <td className="py-2 px-2 text-center">
+                  <button className="text-red-500" title="Remove" onClick={()=> setContent(c=> ({...c, termsOfPayment: c.termsOfPayment.filter((_,idx)=>idx!==i)}))}>✕</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      {content.termsOfPayment.map((t, i) => (
-        <div key={i} className="grid grid-cols-12 gap-4 items-center">
-          <button className="text-red-500" onClick={()=> setContent(c=> ({...c, termsOfPayment: c.termsOfPayment.filter((_,idx)=>idx!==i)}))}>✕</button>
-          <div className="col-span-1"><input type="number" value={t.percentage} onChange={e=> setContent(c=> ({...c, termsOfPayment: c.termsOfPayment.map((x,idx)=> idx!==i? x : { ...x, percentage: +e.target.value })}))} className="w-full bg-gray-50 border rounded-lg p-2" /></div>
-          <div className="col-span-8"><input value={t.description} onChange={e=> setContent(c=> ({...c, termsOfPayment: c.termsOfPayment.map((x,idx)=> idx!==i? x : { ...x, description: e.target.value })}))} className="w-full bg-gray-50 border rounded-lg p-2" /></div>
-          <div className="col-span-2"><input type="number" value={t.total} onChange={e=> setContent(c=> ({...c, termsOfPayment: c.termsOfPayment.map((x,idx)=> idx!==i? x : { ...x, total: +e.target.value })}))} className="w-full bg-gray-50 border rounded-lg p-2 text-right" /></div>
-        </div>
-      ))}
-      <div className="grid grid-cols-12 gap-4 items-center">
-        <button className="text-blue-500" onClick={()=> setContent(c=> ({...c, termsOfPayment: [...c.termsOfPayment, { percentage: 0, description: '', total: 0 }]}))}>+ Add</button>
-      </div>
+      <button className="text-blue-600 text-sm" onClick={()=> setContent(c=> ({...c, termsOfPayment: [...c.termsOfPayment, { percentage: 0, description: '', total: 0 }]}))}>+ Add term</button>
     </div>
   );
 
   const TabTerms = () => (
     <div className="space-y-3">
-      {content.termsAndConditions.map((t, i) => (
-        <div key={i} className="flex items-start gap-2">
-          <button className="text-red-500" onClick={()=> setContent(c=> ({...c, termsAndConditions: c.termsAndConditions.filter((_,idx)=>idx!==i)}))}>✕</button>
-          <textarea value={t} onChange={e=> setContent(c=> ({...c, termsAndConditions: c.termsAndConditions.map((x,idx)=> idx!==i? x : e.target.value)}))} className="w-full bg-gray-50 border rounded-lg p-2" rows={2} />
-        </div>
-      ))}
-      <button className="text-blue-600" onClick={()=> setContent(c=> ({...c, termsAndConditions: [...c.termsAndConditions, '']}))}>+ Add Term</button>
+      <div className="overflow-x-auto bg-white p-4 rounded-lg border">
+        <table className="w-full text-sm">
+          <thead className="text-xs text-gray-700 uppercase">
+            <tr>
+              <th className="py-3 px-2 text-left w-12">No.</th>
+              <th className="py-3 px-2 text-left">Terms & Conditions</th>
+              <th className="py-3 px-2 text-center w-12"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {content.termsAndConditions.map((t, i) => (
+              <tr key={i} className="hover:bg-gray-50">
+                <td className="py-2 px-2 align-top">{i + 1}</td>
+                <td className="py-2 px-2">
+                  <textarea value={t}
+                    onChange={e=> setContent(c=> ({...c, termsAndConditions: c.termsAndConditions.map((x,idx)=> idx!==i? x : e.target.value)}))}
+                    className="w-full bg-gray-50 border rounded p-2" rows={2} />
+                </td>
+                <td className="py-2 px-2 text-center">
+                  <button className="text-red-500" title="Remove" onClick={()=> setContent(c=> ({...c, termsAndConditions: c.termsAndConditions.filter((_,idx)=>idx!==i)}))}>✕</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button className="text-blue-600 text-sm" onClick={()=> setContent(c=> ({...c, termsAndConditions: [...c.termsAndConditions, '']}))}>+ Add term</button>
     </div>
   );
 
