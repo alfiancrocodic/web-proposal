@@ -1,9 +1,27 @@
 "use client";
-import { useEffect, useMemo, useState, Fragment } from 'react';
+import { useEffect, useMemo, useState, Fragment, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
 import { getProposalTemplates, getProposalContent, putProposalContent } from '@/lib/api';
+
+const PlusIcon = ({ className = "w-5 h-5" }) => (
+    <svg className={className} xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+    </svg>
+);
+
+const SearchIcon = () => (
+    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    </svg>
+);
+
+const XIcon = ({ className = "w-4 h-4" }) => (
+    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+    </svg>
+);
 
 const DEFAULT_CONTENT = {
   systemEnvironment: { platforms: [], notes: '' },
@@ -110,9 +128,459 @@ export default function ProposalBuilderPage() {
   const addItem = (key, gi) => setContent(c => ({ ...c, [key]: c[key].map((g,i)=> i!==gi? g: { ...g, items: [...g.items, { name: 'New Feature', condition: '' }]}) }));
   const removeItem = (key, gi, ii) => setContent(c => ({ ...c, [key]: c[key].map((g,i)=> i!==gi? g: { ...g, items: g.items.filter((_,j)=>j!==ii) }) }));
 
-  const addSection = () => setContent(c => ({ ...c, financialBreakdown: [...c.financialBreakdown, { section: 'New Section', items: [] }] }));
+  const addMainModule = (module) => {
+    setContent(c => ({
+      ...c,
+      featureSales: [...c.featureSales, module]
+    }));
+  };
+
+  const removeMainModule = (index) => {
+    setContent(c => ({
+      ...c,
+      featureSales: c.featureSales.filter((_, i) => i !== index)
+    }));
+  };
+
+  const addSubModule = (mainIndex) => {
+    const newSubModule = { name: "New Sub Module", features: [] };
+    setContent(c => ({
+      ...c,
+      featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : { ...m, sub_modules: [...m.sub_modules, newSubModule] })
+    }));
+  };
+
+  const removeSubModule = (mainIndex, subIndex) => {
+    setContent(c => ({
+      ...c,
+      featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : { ...m, sub_modules: m.sub_modules.filter((_, si) => si !== subIndex) })
+    }));
+  };
+
+  const addFeature = (mainIndex, subIndex) => {
+    const newFeature = { name: "New Feature", description: "", mandays: 0, conditions: [] };
+    setContent(c => ({
+      ...c,
+      featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : {
+        ...m,
+        sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : { ...sm, features: [...sm.features, newFeature] })
+      })
+    }));
+  };
+
+  const removeFeature = (mainIndex, subIndex, featureIndex) => {
+    setContent(c => ({
+      ...c,
+      featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : {
+        ...m,
+        sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : { ...sm, features: sm.features.filter((_, fi) => fi !== featureIndex) })
+      })
+    }));
+  };
+
+  const addSection = (key) => setContent(c => ({ ...c, [key]: [...c[key], { section: 'New Section', items: [] }] }));
   const addFbItem = (si) => setContent(c => ({ ...c, financialBreakdown: c.financialBreakdown.map((s,i)=> i!==si? s: { ...s, items: [...s.items, { activity: 'Activity', resource: 'Resource', quantity: 1, mandays: 0, price: 0, parallel: false, hide: false }]}) }));
   const currency = (n) => new Intl.NumberFormat('id-ID').format(+n||0);
+
+  const TabFeatureSales = () => {
+    const [search, setSearch] = useState('');
+    const [searchResults, setSearchResults] = useState([]);
+    const [selectedModules, setSelectedModules] = useState([]);
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [selectedSubModules, setSelectedSubModules] = useState({});
+    const dropdownRef = useRef(null);
+
+    // Effect untuk menutup dropdown ketika klik di luar
+    useEffect(() => {
+      const handleClickOutside = (event) => {
+        if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+          setShowDropdown(false);
+        }
+      };
+
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, []);
+
+    // Fungsi untuk melakukan pencarian
+    const handleSearch = async (searchTerm) => {
+      if (!searchTerm.trim()) {
+        setSearchResults([]);
+        setShowDropdown(false);
+        return;
+      }
+      
+      try {
+        // Menggunakan backend Laravel dengan autentikasi
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001'}/api/main-modules?search=${searchTerm}&with_sub_modules=true&with_features=true`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const response = await res.json();
+        // Backend Laravel mengembalikan data dalam format { success, message, data }
+        const data = response.success ? response.data.data : [];
+        setSearchResults(data);
+        setShowDropdown(true);
+      } catch (error) {
+        console.error('Error fetching modules:', error);
+        setSearchResults([]);
+      }
+    };
+
+    // Fungsi untuk menangani perubahan input pencarian
+    const handleInputChange = (e) => {
+      const value = e.target.value;
+      setSearch(value);
+      handleSearch(value);
+    };
+
+    // Fungsi untuk menangani seleksi sub modul
+    const handleSubModuleToggle = (mainModuleId, subModuleId) => {
+      setSelectedSubModules(prev => {
+        const key = `${mainModuleId}-${subModuleId}`;
+        const newSelection = { ...prev };
+        
+        if (newSelection[key]) {
+          delete newSelection[key];
+        } else {
+          const mainModule = searchResults.find(m => m.id === mainModuleId);
+          const subModule = mainModule?.sub_modules.find(sm => sm.id === subModuleId);
+          if (subModule) {
+            newSelection[key] = {
+              mainModuleId,
+              subModuleId,
+              mainModuleName: mainModule.name,
+              subModuleName: subModule.name,
+              features: subModule.features || []
+            };
+          }
+        }
+        
+        return newSelection;
+      });
+    };
+
+    // Fungsi untuk menambahkan modul yang dipilih ke dalam chips
+    const addSelectedModule = (module) => {
+      if (!selectedModules.find(m => m.id === module.id)) {
+        setSelectedModules(prev => [...prev, module]);
+      }
+    };
+
+    // Fungsi untuk menghapus chip
+    const removeSelectedModule = (moduleId) => {
+      setSelectedModules(prev => prev.filter(m => m.id !== moduleId));
+      // Hapus juga sub modul yang terkait
+      setSelectedSubModules(prev => {
+        const newSelection = { ...prev };
+        Object.keys(newSelection).forEach(key => {
+          if (key.startsWith(`${moduleId}-`)) {
+            delete newSelection[key];
+          }
+        });
+        return newSelection;
+      });
+    };
+
+    // Fungsi untuk menambahkan data ke tabel
+    const handleAddToTable = () => {
+      const selectedData = Object.values(selectedSubModules);
+      
+      // Kelompokkan sub modul berdasarkan main modul
+      const groupedByMainModule = selectedData.reduce((acc, item) => {
+        if (!acc[item.mainModuleName]) {
+          acc[item.mainModuleName] = {
+            mainModuleName: item.mainModuleName,
+            subModules: []
+          };
+        }
+        acc[item.mainModuleName].subModules.push({
+          id: item.subModuleId,
+          name: item.subModuleName,
+          features: item.features
+        });
+        return acc;
+      }, {});
+      
+      // Tambahkan atau gabungkan dengan main modul yang sudah ada
+      Object.values(groupedByMainModule).forEach(group => {
+        const existingMainModuleIndex = content.featureSales.findIndex(
+          module => module.name === group.mainModuleName
+        );
+        
+        if (existingMainModuleIndex >= 0) {
+          // Gabungkan dengan main modul yang sudah ada
+          setContent(c => ({
+            ...c,
+            featureSales: c.featureSales.map((module, index) => {
+              if (index === existingMainModuleIndex) {
+                return {
+                  ...module,
+                  sub_modules: [...module.sub_modules, ...group.subModules]
+                };
+              }
+              return module;
+            })
+          }));
+        } else {
+          // Buat main modul baru
+          const newModule = {
+            id: Date.now() + Math.random(),
+            name: group.mainModuleName,
+            sub_modules: group.subModules
+          };
+          addMainModule(newModule);
+        }
+      });
+      
+      // Reset form
+      setSearch('');
+      setSearchResults([]);
+      setSelectedModules([]);
+      setSelectedSubModules({});
+      setShowDropdown(false);
+    };
+
+    return (
+        <div className="space-y-6">
+            <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Feature Sales</h2>
+                <div className="flex items-center space-x-2">
+                    <button className="px-4 py-2 text-sm font-semibold text-green-700 bg-green-100 rounded-lg">Android Phone</button>
+                    <button className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg">iOS iPhone</button>
+                </div>
+            </div>
+            
+            {/* Search Form */}
+            <div className="bg-white p-6 rounded-lg border">
+                <h3 className="text-lg font-semibold mb-4">Pencarian Modul</h3>
+                
+                {/* Search Input with Chips */}
+                 <div className="relative" ref={dropdownRef}>
+                    <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg min-h-[50px] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                        {/* Selected Module Chips */}
+                        {selectedModules.map((module) => (
+                            <div key={module.id} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                                <span>{module.name}</span>
+                                <button
+                                    onClick={() => removeSelectedModule(module.id)}
+                                    className="ml-2 text-blue-600 hover:text-blue-800"
+                                >
+                                    ×
+                                </button>
+                            </div>
+                        ))}
+                        
+                        {/* Search Input */}
+                        <input
+                            type="text"
+                            value={search}
+                            onChange={handleInputChange}
+                            onFocus={() => search && setShowDropdown(true)}
+                            placeholder={selectedModules.length === 0 ? "Cari nama Main Modul..." : ""}
+                            className="flex-1 min-w-[200px] outline-none bg-transparent"
+                        />
+                    </div>
+                    
+                    {/* Dropdown Results */}
+                    {showDropdown && searchResults.length > 0 && (
+                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+                            {searchResults.map((module) => (
+                                <div key={module.id} className="border-b border-gray-100 last:border-b-0">
+                                    {/* Main Module Header */}
+                                    <div 
+                                        className="p-4 hover:bg-gray-50 cursor-pointer flex justify-between items-center"
+                                        onClick={() => addSelectedModule(module)}
+                                    >
+                                        <div>
+                                            <div className="font-medium text-gray-900">{module.name}</div>
+                                            <div className="text-sm text-gray-500">{module.sub_modules?.length || 0} Sub Modul</div>
+                                        </div>
+                                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                                            Pilih
+                                        </button>
+                                    </div>
+                                    
+                                    {/* Sub Modules */}
+                                    {module.sub_modules && module.sub_modules.length > 0 && (
+                                        <div className="pl-6 pb-4">
+                                            <div className="text-sm font-medium text-gray-700 mb-2">Sub Modul:</div>
+                                            <div className="space-y-2">
+                                                {module.sub_modules.map((subModule) => (
+                                                    <label key={subModule.id} className="flex items-start space-x-3 cursor-pointer">
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={!!selectedSubModules[`${module.id}-${subModule.id}`]}
+                                                            onChange={() => handleSubModuleToggle(module.id, subModule.id)}
+                                                            className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                        />
+                                                        <div className="flex-1">
+                                                            <div className="text-sm font-medium text-gray-900">{subModule.name}</div>
+                                                            {subModule.features && subModule.features.length > 0 && (
+                                                                <div className="text-xs text-gray-500 mt-1">
+                                                                    {subModule.features.length} Feature(s)
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    </label>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+                
+                {/* Add Button */}
+                {Object.keys(selectedSubModules).length > 0 && (
+                    <div className="mt-4 flex justify-end">
+                        <button
+                            onClick={handleAddToTable}
+                            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500"
+                        >
+                            Add ({Object.keys(selectedSubModules).length} item)
+                        </button>
+                    </div>
+                )}
+                
+                {/* Selected Sub Modules Preview */}
+                {Object.keys(selectedSubModules).length > 0 && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                        <h4 className="font-medium mb-2 text-gray-700">Sub Modul yang Dipilih:</h4>
+                        <div className="space-y-2">
+                            {Object.values(selectedSubModules).map((item, index) => (
+                                <div key={index} className="text-sm text-gray-600">
+                                    <span className="font-medium">{item.mainModuleName}</span> → {item.subModuleName}
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            <div className="space-y-6">
+                {/* Header Tabel */}
+                <div className="grid grid-cols-12 gap-x-4 text-sm font-bold text-gray-600 px-4 py-2 bg-gray-50 rounded-lg">
+                    <div className="col-span-2">Main Modul</div>
+                    <div className="col-span-2">Sub Modul</div>
+                    <div className="col-span-3">Features</div>
+                    <div className="col-span-4">Condition</div>
+                    <div className="col-span-1 text-right">Mandays</div>
+                </div>
+
+                {/* Konten Tabel */}
+                {content.featureSales.map((mainModule, mainIndex) => (
+                    <div key={mainIndex} className="bg-white border rounded-lg">
+                        {mainModule.sub_modules.map((subModule, subIndex) => (
+                            <div key={subIndex} className="grid grid-cols-12 gap-x-4 items-start p-4 hover:bg-gray-50 border-b last:border-b-0">
+                                {/* Main Modul - hanya tampil di baris pertama */}
+                                {subIndex === 0 ? (
+                                    <div className="col-span-2">
+                                        <div className="bg-blue-100 text-blue-800 rounded-md p-2 flex items-center justify-between">
+                                            <span className="font-medium">{mainModule.name}</span> 
+                                            <button 
+                                                onClick={() => removeMainModule(mainIndex)}
+                                                className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50"
+                                                title="Hapus Main Modul"
+                                            >
+                                                <XIcon className="w-4 h-4"/>
+                                            </button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="col-span-2"></div>
+                                )}
+                               
+                                {/* Sub Modul */}
+                                <div className="col-span-2">
+                                    <div className="bg-gray-100 rounded-md p-2 flex items-center justify-between">
+                                        <span className="font-medium text-gray-700">{subModule.name}</span> 
+                                        <button 
+                                            onClick={() => removeSubModule(mainIndex, subIndex)}
+                                            className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50"
+                                            title="Hapus Sub Modul"
+                                        >
+                                            <XIcon className="w-4 h-4"/>
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                {/* Features */}
+                                <div className="col-span-3 space-y-2">
+                                    {subModule.features.map((feature, fIdx) => (
+                                        <div key={fIdx} className="bg-gray-100 rounded-md p-2 flex items-center justify-between">
+                                            <span className="text-sm">{feature.name}</span> 
+                                            <button 
+                                                onClick={() => removeFeature(mainIndex, subIndex, fIdx)}
+                                                className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50"
+                                                title="Hapus Feature"
+                                            >
+                                                <XIcon className="w-3 h-3"/>
+                                            </button>
+                                        </div>
+                                    ))}
+                                    <button 
+                                        className="w-full text-blue-600 p-2 flex items-center justify-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300" 
+                                        onClick={() => addFeature(mainIndex, subIndex)}
+                                    >
+                                        <PlusIcon className="w-4 h-4" /> <span className="text-sm">Tambah Feature</span>
+                                    </button>
+                                </div>
+                                
+                                {/* Conditions */}
+                                <div className="col-span-4 space-y-2">
+                                    {subModule.features.map((feature, fIdx) => (
+                                        <div key={fIdx} className="bg-gray-100 rounded-md p-2 h-full whitespace-pre-line text-xs">
+                                            {feature.description || 'Tidak ada deskripsi'}
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                {/* Mandays */}
+                                <div className="col-span-1 flex justify-end">
+                                    <div className="bg-blue-100 text-blue-800 font-semibold rounded-md p-2 w-16 text-center">
+                                        {subModule.features.reduce((acc, f) => acc + (f.mandays || 0), 0)}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                        
+                        {/* Tombol Tambah Sub Modul */}
+                        <div className="px-4 py-3 bg-gray-50 border-t">
+                            <button 
+                                className="text-blue-600 p-2 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300" 
+                                onClick={() => addSubModule(mainIndex)}
+                            >
+                                <PlusIcon className="w-4 h-4" /> <span>Tambah Sub Modul</span>
+                            </button>
+                        </div>
+                    </div>
+                ))}
+                
+                {/* Pesan jika tidak ada data */}
+                {content.featureSales.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                        <p className="text-lg mb-2">Belum ada modul yang ditambahkan</p>
+                        <p className="text-sm">Gunakan pencarian di atas untuk menambahkan modul</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+  };
 
   const TabSystem = () => {
     const { systemEnvironment } = content;
@@ -565,7 +1033,7 @@ export default function ProposalBuilderPage() {
   const renderTab = () => {
     switch (activeTab) {
       case 1: return <TabSystem />;
-      case 2: return <TabFeatures keyName="featureSales"/>;
+      case 2: return <TabFeatureSales />;
       case 3: return <TabFeatures keyName="featureAdmin"/>;
       case 4: return <TabFinancial />;
       case 5: return <TabPayment />;
