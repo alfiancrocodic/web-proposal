@@ -41,6 +41,13 @@ export default function ProposalBuilderPage() {
   const [proposal, setProposal] = useState(null);
   const [content, setContent] = useState(DEFAULT_CONTENT);
   const [activeTab, setActiveTab] = useState(1);
+  
+  // State untuk modal input
+  const [showModal, setShowModal] = useState(false);
+  const [modalType, setModalType] = useState(''); // 'submodule', 'feature', 'condition'
+  const [modalTitle, setModalTitle] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const [modalCallback, setModalCallback] = useState(null);
   const tabs = [
     { id: 1, title: 'System Environment' },
     { id: 2, title: 'Feature Sales' },
@@ -142,12 +149,44 @@ export default function ProposalBuilderPage() {
     }));
   };
 
+  // Fungsi untuk membuka modal input
+  const openModal = (type, title, callback) => {
+    setModalType(type);
+    setModalTitle(title);
+    setInputValue('');
+    setModalCallback(() => callback);
+    setShowModal(true);
+  };
+
+  // Fungsi untuk menutup modal
+  const closeModal = () => {
+    setShowModal(false);
+    setModalType('');
+    setModalTitle('');
+    setInputValue('');
+    setModalCallback(null);
+  };
+
+  // Fungsi untuk submit modal
+  const submitModal = () => {
+    if (inputValue.trim() && modalCallback) {
+      modalCallback(inputValue.trim());
+      closeModal();
+    }
+  };
+
   const addSubModule = (mainIndex) => {
-    const newSubModule = { name: "New Sub Module", features: [] };
-    setContent(c => ({
-      ...c,
-      featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : { ...m, sub_modules: [...m.sub_modules, newSubModule] })
-    }));
+    openModal('submodule', 'Masukkan nama Sub Modul:', (name) => {
+      const newSubModule = { 
+        name: name, 
+        features: [],
+        subModuleId: null // Manual sub module tidak memiliki ID dari backend
+      };
+      setContent(c => ({
+        ...c,
+        featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : { ...m, sub_modules: [...m.sub_modules, newSubModule] })
+      }));
+    });
   };
 
   const removeSubModule = (mainIndex, subIndex) => {
@@ -157,17 +196,58 @@ export default function ProposalBuilderPage() {
     }));
   };
 
+  // Fungsi untuk menambah feature manual
   const addFeature = (mainIndex, subIndex) => {
-    const newFeature = { name: "New Feature", description: "", mandays: 0, conditions: [] };
+    openModal('feature', 'Masukkan nama Feature:', (name) => {
+      setContent(c => ({
+        ...c,
+        featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : {
+          ...m,
+          sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : {
+            ...sm,
+            features: [...sm.features, { name: name, mandays: 0, conditions: [] }]
+          })
+        })
+      }));
+    });
+  };
+
+  // Fungsi untuk menambah condition manual
+  const addCondition = (mainIndex, subIndex, featureIndex) => {
+    openModal('condition', 'Masukkan nama Condition:', (name) => {
+      setContent(c => ({
+        ...c,
+        featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : {
+          ...m,
+          sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : {
+            ...sm,
+            features: sm.features.map((f, fi) => fi !== featureIndex ? f : {
+              ...f,
+              conditions: [...(f.conditions || []), { name: name, condition_text: '' }]
+            })
+          })
+        })
+      }));
+    });
+  };
+
+  // Fungsi untuk menghapus condition
+  const removeCondition = (mainIndex, subIndex, featureIndex, conditionIndex) => {
     setContent(c => ({
       ...c,
       featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : {
         ...m,
-        sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : { ...sm, features: [...sm.features, newFeature] })
+        sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : {
+          ...sm,
+          features: sm.features.map((f, fi) => fi !== featureIndex ? f : {
+            ...f,
+            conditions: (f.conditions || []).filter((_, ci) => ci !== conditionIndex)
+          })
+        })
       })
     }));
   };
-
+  
   const removeFeature = (mainIndex, subIndex, featureIndex) => {
     setContent(c => ({
       ...c,
@@ -293,12 +373,47 @@ export default function ProposalBuilderPage() {
       });
     };
 
+    // Fungsi untuk mengambil data features dan conditions dari backend
+    const fetchSubModuleComplete = async (subModuleId) => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001'}/api/sub-modules/${subModuleId}/complete`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (!res.ok) {
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+        
+        const response = await res.json();
+        return response.success ? response.data : null;
+      } catch (error) {
+        console.error('Error fetching sub module complete data:', error);
+        return null;
+      }
+    };
+
     // Fungsi untuk menambahkan data ke tabel
-    const handleAddToTable = () => {
+    const handleAddToTable = async () => {
       const selectedData = Object.values(selectedSubModules);
       
+      // Ambil data lengkap features dan conditions untuk setiap sub modul
+      const enrichedData = await Promise.all(
+        selectedData.map(async (item) => {
+          const completeData = await fetchSubModuleComplete(item.subModuleId);
+          return {
+            ...item,
+            features: completeData?.features || item.features || []
+          };
+        })
+      );
+      
       // Kelompokkan sub modul berdasarkan main modul
-      const groupedByMainModule = selectedData.reduce((acc, item) => {
+      const groupedByMainModule = enrichedData.reduce((acc, item) => {
         if (!acc[item.mainModuleName]) {
           acc[item.mainModuleName] = {
             mainModuleName: item.mainModuleName,
@@ -532,19 +647,56 @@ export default function ProposalBuilderPage() {
                                             </button>
                                         </div>
                                     ))}
+                                    {subModule.features.length === 0 && (
+                                        <div className="text-center py-4 text-gray-500 text-sm">
+                                            Features akan muncul otomatis dari sub modul
+                                        </div>
+                                    )}
+                                    {/* Tombol Tambah Feature */}
                                     <button 
-                                        className="w-full text-blue-600 p-2 flex items-center justify-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300" 
+                                        className="text-blue-600 p-2 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300 w-full text-sm" 
                                         onClick={() => addFeature(mainIndex, subIndex)}
                                     >
-                                        <PlusIcon className="w-4 h-4" /> <span className="text-sm">Tambah Feature</span>
+                                        <PlusIcon className="w-3 h-3" /> <span>Tambah Feature</span>
                                     </button>
                                 </div>
                                 
                                 {/* Conditions */}
                                 <div className="col-span-4 space-y-2">
                                     {subModule.features.map((feature, fIdx) => (
-                                        <div key={fIdx} className="bg-gray-100 rounded-md p-2 h-full whitespace-pre-line text-xs">
-                                            {feature.description || 'Tidak ada deskripsi'}
+                                        <div key={fIdx} className="space-y-1">
+                                            {feature.conditions && feature.conditions.length > 0 ? (
+                                                feature.conditions.map((condition, cIdx) => (
+                                                    <div key={cIdx} className="bg-gray-100 rounded-md p-2 text-xs flex justify-between items-start">
+                                                        <div className="flex-1">
+                                                            <div className="font-medium text-gray-700">{condition.name}</div>
+                                                            {condition.condition_text && (
+                                                                <div className="text-gray-600 mt-1 whitespace-pre-line">
+                                                                    {condition.condition_text}
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => removeCondition(mainIndex, subIndex, fIdx, cIdx)}
+                                                            className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 ml-2"
+                                                            title="Hapus Condition"
+                                                        >
+                                                            <XIcon className="w-3 h-3"/>
+                                                        </button>
+                                                    </div>
+                                                ))
+                                            ) : (
+                                                <div className="bg-gray-100 rounded-md p-2 text-xs text-gray-500">
+                                                    Tidak ada kondisi
+                                                </div>
+                                            )}
+                                            {/* Tombol Tambah Condition */}
+                                            <button 
+                                                className="text-blue-600 p-1 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300 w-full text-xs" 
+                                                onClick={() => addCondition(mainIndex, subIndex, fIdx)}
+                                            >
+                                                <PlusIcon className="w-3 h-3" /> <span>Tambah Condition</span>
+                                            </button>
                                         </div>
                                     ))}
                                 </div>
@@ -552,7 +704,10 @@ export default function ProposalBuilderPage() {
                                 {/* Mandays */}
                                 <div className="col-span-1 flex justify-end">
                                     <div className="bg-blue-100 text-blue-800 font-semibold rounded-md p-2 w-16 text-center">
-                                        {subModule.features.reduce((acc, f) => acc + (f.mandays || 0), 0)}
+                                        {subModule.features.reduce((acc, f) => {
+                                            const mandays = parseFloat(f.mandays) || 0;
+                                            return acc + mandays;
+                                        }, 0)}
                                     </div>
                                 </div>
                             </div>
@@ -1076,6 +1231,39 @@ export default function ProposalBuilderPage() {
           {renderTab()}
         </div>
       </main>
+      
+      {/* Modal untuk input nama */}
+      {showModal && (
+        <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-[9999]" onClick={closeModal}>
+          <div className="bg-white rounded-lg shadow-xl p-6 w-96 max-w-md mx-4 relative" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-medium text-gray-900 mb-4">{modalTitle}</h3>
+            <input
+              type="text"
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && submitModal()}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder="Masukkan nama..."
+              autoFocus
+            />
+            <div className="flex justify-end space-x-3 mt-6">
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-gray-500"
+              >
+                Batal
+              </button>
+              <button
+                onClick={submitModal}
+                disabled={!inputValue.trim()}
+                className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Tambah
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
