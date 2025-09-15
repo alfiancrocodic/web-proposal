@@ -468,7 +468,7 @@ export default function ProposalBuilderPage() {
     };
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 bg-white border rounded-xl p-6 shadow-sm">
             <div className="flex justify-between items-center mb-4">
                 <h2 className="text-xl font-bold">Feature Sales</h2>
                 <div className="flex items-center space-x-2">
@@ -573,7 +573,7 @@ export default function ProposalBuilderPage() {
                 
                 {/* Selected Sub Modules Preview */}
                 {Object.keys(selectedSubModules).length > 0 && (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="mt-4 p-4 bg-white border rounded-lg">
                         <h4 className="font-medium mb-2 text-gray-700">Sub Modul yang Dipilih:</h4>
                         <div className="space-y-2">
                             {Object.values(selectedSubModules).map((item, index) => (
@@ -588,7 +588,7 @@ export default function ProposalBuilderPage() {
 
             <div className="space-y-6">
                 {/* Header Tabel */}
-                <div className="grid grid-cols-12 gap-x-4 text-sm font-bold text-gray-600 px-4 py-2 bg-gray-50 rounded-lg">
+                <div className="grid grid-cols-12 gap-x-4 text-sm font-semibold text-gray-700 px-4 py-3 bg-white border rounded-md shadow-sm">
                     <div className="col-span-2">Main Modul</div>
                     <div className="col-span-2">Sub Modul</div>
                     <div className="col-span-3">Features</div>
@@ -598,125 +598,106 @@ export default function ProposalBuilderPage() {
 
                 {/* Konten Tabel */}
                 {content.featureSales.map((mainModule, mainIndex) => (
-                    <div key={mainIndex} className="bg-white border rounded-lg">
+                    <div key={mainIndex} className="bg-white border rounded-lg shadow-sm overflow-hidden">
                         {mainModule.sub_modules.map((subModule, subIndex) => (
-                            <div key={subIndex} className="grid grid-cols-12 gap-x-4 items-start p-4 hover:bg-gray-50 border-b last:border-b-0">
-                                {/* Main Modul - hanya tampil di baris pertama */}
-                                {subIndex === 0 ? (
-                                    <div className="col-span-2">
-                                        <div className="bg-blue-100 text-blue-800 rounded-md p-2 flex items-center justify-between">
-                                            <span className="font-medium">{mainModule.name}</span> 
-                                            <button 
-                                                onClick={() => removeMainModule(mainIndex)}
-                                                className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50"
-                                                title="Hapus Main Modul"
-                                            >
-                                                <XIcon className="w-4 h-4"/>
-                                            </button>
+                            <Fragment key={subIndex}>
+                                {(Array.isArray(subModule.features) && subModule.features.length > 0 ? subModule.features : [null]).map((feature, fIdx) => (
+                                    <div key={`${subIndex}-${fIdx}`} className="grid grid-cols-12 gap-x-4 items-start p-4 hover:bg-gray-50 border-b last:border-b-0">
+                                        {/* Main Modul - tampil di subIndex 0 dan fIdx 0 */}
+                                        {(subIndex === 0 && fIdx === 0) ? (
+                                            <div className="col-span-2">
+                                                <div className="bg-white border border-blue-300 text-blue-800 rounded-md p-2 flex items-center justify-between">
+                                                    <span className="font-semibold text-sm">{mainModule.name}</span>
+                                                    <button onClick={() => removeMainModule(mainIndex)} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Main Modul">
+                                                        <XIcon className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="col-span-2"></div>
+                                        )}
+
+                                        {/* Sub Modul - tampil di fIdx 0 */}
+                                        {fIdx === 0 ? (
+                                            <div className="col-span-2">
+                                                <div className="bg-white border rounded-md p-2 flex items-center justify-between">
+                                                    <span className="font-medium text-gray-800 text-sm">{subModule.name}</span>
+                                                    <button onClick={() => removeSubModule(mainIndex, subIndex)} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Sub Modul">
+                                                        <XIcon className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="col-span-2"></div>
+                                        )}
+
+                                        {/* Feature */}
+                                        <div className="col-span-3">
+                                            {feature ? (
+                                                <div className="bg-white border rounded-md p-2 flex items-center justify-between">
+                                                    <span className="text-sm">{feature.name}</span>
+                                                    <button onClick={() => removeFeature(mainIndex, subIndex, fIdx)} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Feature">
+                                                        <XIcon className="w-3 h-3" />
+                                                    </button>
+                                                </div>
+                                            ) : null}
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="col-span-2"></div>
-                                )}
-                               
-                                {/* Sub Modul */}
-                                <div className="col-span-2">
-                                    <div className="bg-gray-100 rounded-md p-2 flex items-center justify-between">
-                                        <span className="font-medium text-gray-700">{subModule.name}</span> 
-                                        <button 
-                                            onClick={() => removeSubModule(mainIndex, subIndex)}
-                                            className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50"
-                                            title="Hapus Sub Modul"
-                                        >
-                                            <XIcon className="w-4 h-4"/>
-                                        </button>
-                                    </div>
-                                </div>
-                                
-                                {/* Features */}
-                                <div className="col-span-3 space-y-2">
-                                    {subModule.features.map((feature, fIdx) => (
-                                        <div key={fIdx} className="bg-gray-100 rounded-md p-2 flex items-center justify-between">
-                                            <span className="text-sm">{feature.name}</span> 
-                                            <button 
-                                                onClick={() => removeFeature(mainIndex, subIndex, fIdx)}
-                                                className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50"
-                                                title="Hapus Feature"
-                                            >
-                                                <XIcon className="w-3 h-3"/>
-                                            </button>
-                                        </div>
-                                    ))}
-                                    {subModule.features.length === 0 && (
-                                        <div className="text-center py-4 text-gray-500 text-sm">
-                                            Features akan muncul otomatis dari sub modul
-                                        </div>
-                                    )}
-                                    {/* Tombol Tambah Feature */}
-                                    <button 
-                                        className="text-blue-600 p-2 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300 w-full text-sm" 
-                                        onClick={() => addFeature(mainIndex, subIndex)}
-                                    >
-                                        <PlusIcon className="w-3 h-3" /> <span>Tambah Feature</span>
-                                    </button>
-                                </div>
-                                
-                                {/* Conditions */}
-                                <div className="col-span-4 space-y-2">
-                                    {subModule.features.map((feature, fIdx) => (
-                                        <div key={fIdx} className="space-y-1">
-                                            {feature.conditions && feature.conditions.length > 0 ? (
+
+                                        {/* Conditions untuk feature */}
+                                        <div className="col-span-4 space-y-2">
+                                            {feature && Array.isArray(feature.conditions) && feature.conditions.length > 0 ? (
                                                 feature.conditions.map((condition, cIdx) => (
-                                                    <div key={cIdx} className="bg-gray-100 rounded-md p-2 text-xs flex justify-between items-start">
+                                                    <div key={cIdx} className="bg-white border rounded-md p-2 text-sm flex justify-between items-start">
                                                         <div className="flex-1">
-                                                            <div className="font-medium text-gray-700">{condition.name}</div>
+                                                            <div className="font-medium text-gray-800 text-sm">{condition.name}</div>
                                                             {condition.condition_text && (
-                                                                <div className="text-gray-600 mt-1 whitespace-pre-line">
-                                                                    {condition.condition_text}
-                                                                </div>
+                                                                <div className="text-gray-700 mt-1 whitespace-pre-line">{condition.condition_text}</div>
                                                             )}
                                                         </div>
-                                                        <button 
-                                                            onClick={() => removeCondition(mainIndex, subIndex, fIdx, cIdx)}
-                                                            className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 ml-2"
-                                                            title="Hapus Condition"
-                                                        >
-                                                            <XIcon className="w-3 h-3"/>
+                                                        <button onClick={() => removeCondition(mainIndex, subIndex, fIdx, cIdx)} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 ml-2" title="Hapus Condition">
+                                                            <XIcon className="w-3 h-3" />
                                                         </button>
                                                     </div>
                                                 ))
-                                            ) : (
-                                                <div className="bg-gray-100 rounded-md p-2 text-xs text-gray-500">
-                                                    Tidak ada kondisi
-                                                </div>
-                                            )}
+                                            ) : null}
                                             {/* Tombol Tambah Condition */}
-                                            <button 
-                                                className="text-blue-600 p-1 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300 w-full text-xs" 
-                                                onClick={() => addCondition(mainIndex, subIndex, fIdx)}
-                                            >
-                                                <PlusIcon className="w-3 h-3" /> <span>Tambah Condition</span>
-                                            </button>
+                                            {feature && (
+                                                <button className="text-blue-600 p-1 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300 w-full text-xs" onClick={() => addCondition(mainIndex, subIndex, fIdx)}>
+                                                    <PlusIcon className="w-3 h-3" /> <span>Tambah Condition</span>
+                                                </button>
+                                            )}
                                         </div>
-                                    ))}
-                                </div>
-                                
-                                {/* Mandays */}
-                                <div className="col-span-1 flex justify-end">
-                                    <div className="bg-blue-100 text-blue-800 font-semibold rounded-md p-2 w-16 text-center">
-                                        {subModule.features.reduce((acc, f) => {
-                                            const mandays = parseFloat(f.mandays) || 0;
-                                            return acc + mandays;
-                                        }, 0)}
+
+                                        {/* Mandays - tampil di fIdx 0 */}
+                                        {fIdx === 0 ? (
+                                            <div className="col-span-1 flex justify-end">
+                                                <div className="bg-blue-50 text-blue-800 font-semibold rounded-md p-2 w-16 text-center">
+                                                    {subModule.features.reduce((acc, f) => (acc + (parseFloat(f.mandays) || 0)), 0)}
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="col-span-1"></div>
+                                        )}
                                     </div>
+                                ))}
+
+                                {/* Tombol Tambah Feature - di baris sendiri setelah daftar feature */}
+                                <div className="grid grid-cols-12 gap-x-4 items-start p-4 border-b last:border-b-0">
+                                    <div className="col-span-2"></div>
+                                    <div className="col-span-2"></div>
+                                    <div className="col-span-3">
+                                        <button className="text-blue-600 p-1 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300 w-full text-xs" onClick={() => addFeature(mainIndex, subIndex)}>
+                                            <PlusIcon className="w-3 h-3" /> <span>Tambah Feature</span>
+                                        </button>
+                                    </div>
+                                    <div className="col-span-4"></div>
+                                    <div className="col-span-1"></div>
                                 </div>
-                            </div>
+                            </Fragment>
                         ))}
-                        
-                        {/* Tombol Tambah Sub Modul */}
-                        <div className="px-4 py-3 bg-gray-50 border-t">
+                        <div className="px-4 py-3 bg-white border-t">
                             <button 
-                                className="text-blue-600 p-2 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300" 
+                                className="text-blue-600 p-1 text-xs flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300" 
                                 onClick={() => addSubModule(mainIndex)}
                             >
                                 <PlusIcon className="w-4 h-4" /> <span>Tambah Sub Modul</span>

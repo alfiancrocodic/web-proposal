@@ -56,28 +56,32 @@ function Header(): React.JSX.Element {
     }
   };
   return (
-    <header className="bg-white shadow-sm">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-3">
-          <div className="flex items-center gap-3">
-            <Image src="/ic_logo_crocodic_square.png" alt="Logo" width={32} height={32} className="rounded" />
-            <span className="font-semibold">Proposal Manager</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <button onClick={() => router.push('/')} className="text-sm text-gray-600 hover:text-black">Home</button>
-            {user && (
-              <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-600">{user.nama || user.name}</span>
-                <span className="text-xs text-gray-500">({user.jabatan})</span>
-              </div>
-            )}
-            <button onClick={logout} className="text-sm text-gray-600 hover:text-black">Logout</button>
-            {/* Fallback to local avatar to avoid remote host issues */}
-            <Image src="/vercel.svg" alt="User" width={32} height={32} className="rounded-full" />
+    <>
+      <header className="fixed top-0 inset-x-0 z-40 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center py-3">
+            <div className="flex items-center gap-3">
+              <Image src="/ic_logo_crocodic_square.png" alt="Logo" width={32} height={32} className="rounded" />
+              <span className="font-semibold">Proposal Manager</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <button onClick={() => router.push('/')} className="text-sm text-gray-600 hover:text-black">Home</button>
+              {user && (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-600">{user.nama || user.name}</span>
+                  <span className="text-xs text-gray-500">({user.jabatan})</span>
+                </div>
+              )}
+              <button onClick={logout} className="text-sm text-gray-600 hover:text-black">Logout</button>
+              {/* Fallback to local avatar to avoid remote host issues */}
+              <Image src="/vercel.svg" alt="User" width={32} height={32} className="rounded-full" />
+            </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+      {/* Spacer to prevent content from being covered by fixed header */}
+      <div className="h-14" aria-hidden="true" />
+    </>
   );
 }
 
