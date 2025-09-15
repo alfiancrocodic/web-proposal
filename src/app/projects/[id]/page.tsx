@@ -82,9 +82,9 @@ export default function ProjectDetailsPage(): React.JSX.Element {
   if (!project) return <div>Loading...</div>;
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-white min-h-screen">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="max-w-screen-2xl mx-auto px-3 sm:px-4 lg:px-6 py-6 space-y-6">
         <Breadcrumbs crumbs={["Home", "Project", project.name]} />
         <div className="flex justify-between items-start">
           <div>

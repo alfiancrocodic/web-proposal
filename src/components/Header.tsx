@@ -58,7 +58,7 @@ function Header(): React.JSX.Element {
   return (
     <>
       <header className="fixed top-0 inset-x-0 z-40 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-screen-2xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center py-3">
             <div className="flex items-center gap-3">
               <Image src="/ic_logo_crocodic_square.png" alt="Logo" width={32} height={32} className="rounded" />

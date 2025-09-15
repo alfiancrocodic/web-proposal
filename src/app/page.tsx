@@ -7,6 +7,7 @@ import {
   getClients, 
   getProjects, 
   createClient, 
+  updateClient,
   Client, 
   Project, 
   ClientFormData 
@@ -37,7 +38,14 @@ export default function Home(): React.JSX.Element {
   const [newClient, setNewClient] = useState<Client | null>(null);
   const [showSuggestions, setShowSuggestions] = useState<boolean>(false);
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const { showError, ToastContainer } = useToast();
+  const { showError, showSuccess, ToastContainer } = useToast();
+  const [showEditModal, setShowEditModal] = useState<boolean>(false);
+  const [editClient, setEditClient] = useState<Client | null>(null);
+  // Filters state for Recent Clients
+  const [showFilter, setShowFilter] = useState<boolean>(false);
+  const [filterLocations, setFilterLocations] = useState<string[]>([]);
+  const [filterBadanUsaha, setFilterBadanUsaha] = useState<string[]>([]);
+  const [filterCategories, setFilterCategories] = useState<string[]>([]);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
@@ -69,6 +77,31 @@ export default function Home(): React.JSX.Element {
     if (!form.company) return [];
     return clients.filter((c: Client) => c.company.toLowerCase().includes(form.company.toLowerCase())).slice(0, 5);
   }, [clients, form.company]);
+
+  // Helpers and available options for filters
+  const getCategory = (company: string): string => {
+    if ((company || '').toLowerCase().includes('mandiri')) return 'A';
+    if ((company || '').toLowerCase().includes('crocodic')) return 'A';
+    return 'B';
+  };
+
+  const availableLocations = useMemo(() => {
+    const set = new Set<string>();
+    clients.forEach(c => { if (c.location) set.add(c.location); });
+    return Array.from(set).sort();
+  }, [clients]);
+
+  const availableBadanUsaha = useMemo(() => {
+    const set = new Set<string>();
+    clients.forEach(c => { if (c.badanUsaha) set.add(c.badanUsaha); });
+    return Array.from(set).sort();
+  }, [clients]);
+
+  const availableCategories = useMemo(() => {
+    const set = new Set<string>();
+    clients.forEach(c => set.add(getCategory(c.company)));
+    return Array.from(set).sort();
+  }, [clients]);
 
   /**
    * Fungsi untuk menyimpan client baru
@@ -107,10 +140,43 @@ export default function Home(): React.JSX.Element {
     if (newClient) router.push(`/projects/new?clientId=${newClient.id}`);
   };
 
+  /**
+   * Buka modal edit client
+   */
+  const openEditClient = (client: Client): void => {
+    setEditClient({ ...client });
+    setShowEditModal(true);
+  };
+
+  /**
+   * Simpan perubahan client
+   */
+  const saveEditClient = async (): Promise<void> => {
+    if (!editClient) return;
+    try {
+      const payload: ClientFormData = {
+        company: editClient.company,
+        location: editClient.location,
+        badanUsaha: editClient.badanUsaha,
+        picName: editClient.picName,
+        position: editClient.position,
+      };
+      const updated = await updateClient(editClient.id, payload);
+      setClients(prev => prev.map(c => c.id === updated.id ? updated : c));
+      setShowEditModal(false);
+      setEditClient(null);
+      showSuccess('Client updated successfully');
+    } catch (error) {
+      console.error('Error updating client:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Gagal mengupdate client. Silakan coba lagi.';
+      showError(errorMessage);
+    }
+  };
+
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-white min-h-screen">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+      <main className="max-w-screen-2xl mx-auto px-3 sm:px-4 lg:px-6 py-6 space-y-8">
         {/* Add New Client */}
         <form onSubmit={saveClient} className="p-6 bg-gradient-to-r from-blue-600 to-cyan-500 rounded-lg text-white shadow-lg">
           <h2 className="text-2xl font-bold">Add new client</h2>
@@ -228,11 +294,23 @@ export default function Home(): React.JSX.Element {
               <p className="text-gray-500">All-inclusive vacations and flights to the Caribbean</p>
             </div>
           </div>
-          <div className="relative mb-4">
-            <input type="text" placeholder="Search client name, project name, company..." className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white placeholder-gray-400" />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <div className="mb-4 flex items-center gap-2">
+            <div className="relative flex-1">
+              <input 
+                type="text" 
+                placeholder="Search client name, project name, company..." 
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg bg-white placeholder-gray-400" 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                <svg className="h-5 w-5 text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              </div>
             </div>
+            <button onClick={()=>setShowFilter(true)} className="inline-flex items-center gap-2 border border-gray-300 text-gray-700 py-2 px-3 rounded-lg hover:bg-gray-50">
+              <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4h18M7 10h10M10 16h4"/></svg>
+              Filter
+            </button>
           </div>
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-x-auto">
             <table className="w-full text-sm text-left">
@@ -242,6 +320,7 @@ export default function Home(): React.JSX.Element {
                   <th className="px-6 py-3">PIC Name</th>
                   <th className="px-6 py-3">Position</th>
                   <th className="px-6 py-3">Company</th>
+                  <th className="px-6 py-3">Badan Usaha</th>
                   <th className="px-6 py-3">Location</th>
                   <th className="px-6 py-3">Category</th>
                   <th className="px-6 py-3">Action</th>
@@ -259,6 +338,13 @@ export default function Home(): React.JSX.Element {
                       client.location.toLowerCase().includes(search)
                     );
                   })
+                  .filter((client: Client) => {
+                    const byLoc = filterLocations.length === 0 || filterLocations.includes(client.location);
+                    const byBU = filterBadanUsaha.length === 0 || filterBadanUsaha.includes(client.badanUsaha);
+                    const cat = getCategory(client.company);
+                    const byCat = filterCategories.length === 0 || filterCategories.includes(cat);
+                    return byLoc && byBU && byCat;
+                  })
                   .slice(0, 10) // Limit to 10 recent clients
                   .map((client: Client, index: number) => {
                     // Format tanggal dari createdAt
@@ -270,25 +356,17 @@ export default function Home(): React.JSX.Element {
                         year: 'numeric'
                       });
                     };
-
-                    // Tentukan category berdasarkan company atau default 'A'
-                    const getCategory = (company: string): string => {
-                      // Logic sederhana untuk menentukan category
-                      if (company.toLowerCase().includes('mandiri')) return 'A';
-                      if (company.toLowerCase().includes('crocodic')) return 'A';
-                      return 'B'; // Default category
-                    };
-
                     return (
                       <tr key={client.id} className="border-b border-gray-200">
                         <td className="px-6 py-4">{formatDate(client.created_at || '')}</td>
                         <td className="px-6 py-4 font-semibold">{client.picName || '-'}</td>
                         <td className="px-6 py-4">{client.position || '-'}</td>
                         <td className="px-6 py-4">{client.company}</td>
+                        <td className="px-6 py-4">{client.badanUsaha || '-'}</td>
                         <td className="px-6 py-4">{client.location}</td>
                         <td className="px-6 py-4">{getCategory(client.company)}</td>
                         <td className="px-6 py-4">
-                          <button className="text-yellow-500 hover:text-yellow-600 p-1" title="Edit">
+                          <button onClick={() => openEditClient(client)} className="text-yellow-500 hover:text-yellow-600 p-1" title="Edit">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.5L16.732 3.732z"/>
                             </svg>
@@ -302,6 +380,97 @@ export default function Home(): React.JSX.Element {
           </div>
         </div>
       </main>
+
+      {/* Filter Modal */}
+      {showFilter && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-2xl">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold">Filter Clients</h2>
+              <button onClick={()=>setShowFilter(false)} className="text-gray-600 hover:text-black">✕</button>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Location</h3>
+                <div className="max-h-48 overflow-auto space-y-1">
+                  {availableLocations.map(loc => (
+                    <label key={loc} className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={filterLocations.includes(loc)} onChange={(e)=> setFilterLocations(prev => e.target.checked ? [...prev, loc] : prev.filter(x=>x!==loc))} />
+                      {loc}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Badan Usaha</h3>
+                <div className="max-h-48 overflow-auto space-y-1">
+                  {availableBadanUsaha.map(bu => (
+                    <label key={bu} className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={filterBadanUsaha.includes(bu)} onChange={(e)=> setFilterBadanUsaha(prev => e.target.checked ? [...prev, bu] : prev.filter(x=>x!==bu))} />
+                      {bu}
+                    </label>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className="font-semibold mb-2">Category</h3>
+                <div className="max-h-48 overflow-auto space-y-1">
+                  {availableCategories.map(cat => (
+                    <label key={cat} className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={filterCategories.includes(cat)} onChange={(e)=> setFilterCategories(prev => e.target.checked ? [...prev, cat] : prev.filter(x=>x!==cat))} />
+                      {cat}
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+            <div className="mt-6 flex justify-between">
+              <button onClick={()=>{setFilterLocations([]); setFilterBadanUsaha([]); setFilterCategories([]);}} className="px-4 py-2 rounded bg-gray-100 border">Clear All</button>
+              <div className="flex gap-2">
+                <button onClick={()=>setShowFilter(false)} className="px-4 py-2 rounded bg-gray-200">Cancel</button>
+                <button onClick={()=>setShowFilter(false)} className="px-4 py-2 rounded bg-blue-600 text-white">Apply</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Client modal */}
+      {showEditModal && editClient && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-lg">
+            <h2 className="text-xl font-bold mb-4">Edit Client</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-medium text-gray-700">Company</label>
+                <input value={editClient.company} onChange={e=>setEditClient(c=>c?{...c, company:e.target.value}:c)} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Location</label>
+                <input value={editClient.location} onChange={e=>setEditClient(c=>c?{...c, location:e.target.value}:c)} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Badan Usaha</label>
+                <select value={editClient.badanUsaha} onChange={e=>setEditClient(c=>c?{...c, badanUsaha:e.target.value}:c)} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5">
+                  {['Swasta','PT','CV','BUMN','Koperasi','Pemerintah','Personal'].map(opt => <option key={opt} value={opt}>{opt}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">PIC Name</label>
+                <input value={editClient.picName} onChange={e=>setEditClient(c=>c?{...c, picName:e.target.value}:c)} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Position</label>
+                <input value={editClient.position} onChange={e=>setEditClient(c=>c?{...c, position:e.target.value}:c)} className="mt-1 w-full bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg p-2.5" />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end gap-2">
+              <button onClick={()=>{setShowEditModal(false); setEditClient(null);}} className="px-4 py-2 rounded bg-gray-200">Cancel</button>
+              <button onClick={saveEditClient} className="px-4 py-2 rounded bg-blue-600 text-white">Save</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirmation modal */}
       {showConfirm && newClient && (

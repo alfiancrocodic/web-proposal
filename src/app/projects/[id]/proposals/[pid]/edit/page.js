@@ -1179,9 +1179,9 @@ export default function ProposalBuilderPage() {
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen">
+    <div className="bg-white min-h-screen">
       <Header />
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+      <main className="max-w-screen-2xl mx-auto px-3 sm:px-4 lg:px-6 py-6 space-y-6">
         <Breadcrumbs crumbs={["Home","Project", project?.name || 'Project', `Proposal V${proposal?.version || ''}`, 'Edit']} />
         <div className="flex justify-between items-start">
           <div>
@@ -1208,7 +1208,7 @@ export default function ProposalBuilderPage() {
           </nav>
         </div>
 
-        <div className="bg-gray-50 p-6 rounded-lg">
+        <div className="bg-white p-6 rounded-lg">
           {renderTab()}
         </div>
       </main>
