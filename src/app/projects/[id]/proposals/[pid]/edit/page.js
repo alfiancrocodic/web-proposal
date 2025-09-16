@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useMemo, useState, Fragment, useRef } from 'react';
+import { useEffect, useMemo, useState, Fragment, useRef, useCallback } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
@@ -18,7 +18,7 @@ const SearchIcon = () => (
 );
 
 const XIcon = ({ className = "w-4 h-4" }) => (
-    <svg className={className} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+    <svg className={className} xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
 );
@@ -247,6 +247,75 @@ export default function ProposalBuilderPage() {
     const [selectedSubModules, setSelectedSubModules] = useState({});
     const dropdownRef = useRef(null);
 
+    // Memoize update functions untuk mencegah re-render berlebihan
+  const updateFeatureMandays = useCallback((mainIndex, subIndex, fIdx, value) => {
+    setRoleModules(rn, (prev) => prev.map((m, i) => i !== mainIndex ? m : ({
+      ...m,
+      sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : ({
+        ...sm,
+        features: sm.features.map((f, fi) => fi !== fIdx ? f : ({ 
+          ...f, 
+          // Konversi ke number jika valid, atau simpan sebagai string kosong jika kosong
+          mandays: value === '' ? '' : (isNaN(Number(value)) ? f.mandays : Number(value))
+        }))
+      }))
+    })));
+  }, [rn, setRoleModules]);
+
+  // State lokal untuk input values agar tidak kehilangan fokus
+  const [localInputValues, setLocalInputValues] = useState({});
+  
+  // Ref untuk menyimpan referensi input yang sedang aktif
+  const activeInputRef = useRef(null);
+  const timeoutRefs = useRef({});
+  
+  // Update local value immediately, debounce state update
+  // Fungsi untuk update mandays ke global state hanya saat blur
+  const handleMandaysBlur = useCallback((mainIndex, subIndex, fIdx, inputId, currentValue) => {
+  // Gunakan currentValue yang dikirim dari event, bukan dari localInputValues
+  const value = currentValue !== undefined ? currentValue : (localInputValues[inputId] || '');
+  updateFeatureMandays(mainIndex, subIndex, fIdx, value);
+  setLocalInputValues(prev => {
+    const next = { ...prev };
+    delete next[inputId];
+    return next;
+  });
+  }, [localInputValues, updateFeatureMandays]);
+  
+  // Fungsi untuk update local value hanya untuk UI, tidak update global state saat onChange
+  const handleMandaysChange = useCallback((mainIndex, subIndex, fIdx, value, inputId) => {
+  setLocalInputValues(prev => ({
+    ...prev,
+    [inputId]: value
+  }));
+  }, []);
+    
+    // ... existing code ...
+    // --- PERBAIKAN: Hapus kode debounce lama yang menyebabkan error ---
+    // Kode berikut menyebabkan error karena 'const' tidak diinisialisasi dan tidak diperlukan lagi setelah migrasi ke update onBlur
+    // Clear timeout sebelumnya jika ada
+    // if (timeoutRefs.current[inputId]) {
+    //   clearTimeout(timeoutRefs.current[inputId]);
+    // }
+    // timeoutRefs.current[inputId] = setTimeout(() => {
+    //   updateFeatureMandays(mainIndex, subIndex, fIdx, value);
+    //   setLocalInputValues(prev => {
+    //     const next = { ...prev };
+    //     delete next[inputId];
+    //     return next;
+    //   });
+    //   delete timeoutRefs.current[inputId];
+    // }, 300);
+
+  // Cleanup semua timeout saat component unmount
+  useEffect(() => {
+    return () => {
+      Object.values(timeoutRefs.current).forEach(timeout => {
+        if (timeout) clearTimeout(timeout);
+      });
+    };
+  }, []);
+
     useEffect(() => {
       const handleClickOutside = (event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -261,7 +330,28 @@ export default function ProposalBuilderPage() {
       if (!searchTerm.trim()) { setSearchResults([]); setShowDropdown(false); return; }
       try {
         const data = await searchMainModules({ search: searchTerm, with_sub_modules: true, with_features: true });
-        setSearchResults(data);
+        // Very strict de-duplication by normalized name (backend may send duplicates with different IDs)
+        const nameKey = (o) => (o && o.name ? String(o.name).toLowerCase().trim() : '');
+        const seen = new Set();
+        const modules = [];
+        for (const m of (Array.isArray(data) ? data : [])) {
+          if (!m) continue;
+          const k = nameKey(m) || (m.id != null ? String(m.id) : '');
+          if (seen.has(k)) continue;
+          seen.add(k);
+          const subs = Array.isArray(m.sub_modules) ? m.sub_modules : [];
+          const seenSub = new Set();
+          const uniqSubs = [];
+          for (const sm of subs) {
+            if (!sm) continue;
+            const sk = nameKey(sm) || (sm.id != null ? String(sm.id) : '');
+            if (seenSub.has(sk)) continue;
+            seenSub.add(sk);
+            uniqSubs.push(sm);
+          }
+          modules.push({ ...m, sub_modules: uniqSubs });
+        }
+        setSearchResults(modules);
         setShowDropdown(true);
       } catch (e) {
         console.error('Error fetching modules:', e);
@@ -398,11 +488,14 @@ export default function ProposalBuilderPage() {
             <div className="text-right">Mandays</div>
           </div>
           {modules.map((mainModule, mainIndex) => (
-            <div key={mainIndex} className="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden">
+            <div key={`m-${mainModule?.id ?? mainIndex}`} className="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden">
               {mainModule.sub_modules.map((subModule, subIndex) => (
-                <Fragment key={subIndex}>
-                  {(Array.isArray(subModule.features) && subModule.features.length > 0 ? subModule.features : [null]).map((feature, fIdx) => (
-                    <div key={`${subIndex}-${fIdx}`} className="grid gap-x-4 items-start p-4 hover:bg-gray-50 border-b border-gray-200 last:border-b-0" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 80px' }}>
+                <Fragment key={`sm-${subModule?.id ?? subIndex}`}>
+                  {(Array.isArray(subModule.features) && subModule.features.length > 0 ? subModule.features : [null]).map((feature, fIdx) => {
+                    // Buat key yang stabil untuk mencegah re-render yang tidak perlu
+                    const stableKey = feature?.id ? `feature-${feature.id}` : `${mainIndex}-${subIndex}-${fIdx}`;
+                    return (
+                    <div key={stableKey} className="grid gap-x-4 items-start p-4 hover:bg-gray-50 border-b border-gray-200 last:border-b-0" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 80px' }}>
                       {(subIndex === 0 && fIdx === 0) ? (
                         <div>
                           <div className="bg-white border border-blue-300 text-blue-800 rounded-md p-2 flex items-center justify-between">
@@ -435,7 +528,7 @@ export default function ProposalBuilderPage() {
                         {feature ? (
                           <div className="space-y-2">
                             {(Array.isArray(feature.conditions) ? feature.conditions : []).map((cond, cIdx) => (
-                              <div key={cIdx} className="flex items-center gap-2">
+                              <div key={`cond-${cond?.id ?? cIdx}`} className="flex items-center gap-2">
                                 <input value={cond.name} onChange={(e)=> setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: sm.features.map((f,fi)=> fi!==fIdx? f : { ...f, conditions: (f.conditions||[]).map((cc,ci)=> ci!==cIdx? cc : { ...cc, name: e.target.value }) }) }) }))} className="flex-1 border border-gray-300 rounded p-2 text-sm" placeholder="Condition" />
                                 <button onClick={() => setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: sm.features.map((f,fi)=> fi!==fIdx? f : { ...f, conditions: (f.conditions||[]).filter((_,ci)=> ci!==cIdx) }) }) }))} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Condition"><XIcon className="w-3 h-3" /></button>
                               </div>
@@ -447,10 +540,74 @@ export default function ProposalBuilderPage() {
                         ) : (<span className="text-gray-400 text-sm italic">—</span>)}
                       </div>
                       <div className="text-right">
-                        <input type="number" value={feature?.mandays || 0} onChange={(e)=> setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: sm.features.map((f,fi)=> fi!==fIdx? f : { ...f, mandays: Number(e.target.value) || 0 }) }) }))} className="w-20 border border-gray-300 rounded p-2 text-sm text-right" />
+                        {feature ? (
+                          <input
+                            ref={(el) => {
+                              if (el && document.activeElement === el) {
+                                activeInputRef.current = el;
+                              }
+                            }}
+                            type="text"
+                            inputMode="decimal"
+                            pattern="[0-9]*\.?[0-9]*"
+                            value={(() => {
+                              const inputId = `mandays-${mainIndex}-${subIndex}-${fIdx}`;
+                              const currentValue = localInputValues[inputId] !== undefined 
+                                ? localInputValues[inputId] 
+                                : (feature.mandays ?? '');
+                              
+                              // Jika sedang mengetik (ada di localInputValues), tampilkan apa adanya
+                              if (localInputValues[inputId] !== undefined) {
+                                return currentValue;
+                              }
+                              
+                              // Format nilai dari backend: hilangkan .00 jika nilai bulat
+                              if (currentValue !== '' && !isNaN(currentValue)) {
+                                const numValue = Number(currentValue);
+                                return numValue % 1 === 0 ? numValue.toString() : numValue.toString();
+                              }
+                              return currentValue;
+                            })()}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              console.log('Input value:', val, 'Regex test:', /^\d*\.?\d*$/.test(val));
+                              // Izinkan nilai kosong, angka bulat, atau desimal
+                              if (val === '' || /^\d*\.?\d*$/.test(val)) {
+                                const inputId = `mandays-${mainIndex}-${subIndex}-${fIdx}`;
+                                activeInputRef.current = e.target;
+                                console.log('Setting localInputValues for', inputId, 'to:', val);
+                                handleMandaysChange(mainIndex, subIndex, fIdx, val, inputId);
+                              } else {
+                                console.log('Input rejected:', val);
+                              }
+                            }}
+                            onFocus={(e) => {
+                              e.target.dataset.scrollTop = window.scrollY;
+                              activeInputRef.current = e.target;
+                            }}
+                            onBlur={(e) => {
+                              const savedScrollTop = parseInt(e.target.dataset.scrollTop || '0');
+                              if (Math.abs(window.scrollY - savedScrollTop) > 50) {
+                                window.scrollTo({ top: savedScrollTop, behavior: 'instant' });
+                              }
+                              if (activeInputRef.current === e.target) {
+                                activeInputRef.current = null;
+                              }
+                              // Update global state saat blur dengan nilai dari input element
+                              const inputId = `mandays-${mainIndex}-${subIndex}-${fIdx}`;
+                              const currentValue = e.target.value;
+                              handleMandaysBlur(mainIndex, subIndex, fIdx, inputId, currentValue);
+                            }}
+                            className="w-20 border border-gray-300 rounded p-2 text-sm text-right [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            placeholder="0"
+                          />
+                        ) : (
+                          <span className="text-gray-400 text-sm italic">—</span>
+                        )}
                       </div>
                     </div>
-                  ))}
+                    );
+                  })}
                   {/* Add Feature row */}
                   <div className="grid gap-x-4 items-start p-4 border-b border-gray-200 last:border-b-0" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 80px' }}>
                     <div></div>
@@ -513,45 +670,35 @@ export default function ProposalBuilderPage() {
       }
     }, [content.systemEnvironment?.template, simple]);
 
-    // Sinkronisasi flag is_other dari template ke state simple yang sudah ada
-    // Tujuan: jika konten lama belum memiliki properti is_other (mis. pada Database Information),
-    // maka properti tersebut akan diisi berdasarkan template terbaru agar input "Other" bisa muncul.
+    // Sinkronisasi flag is_other dari template ke state simple (sekali saat template tersedia)
+    // Menghindari dipanggil pada setiap perubahan input agar fokus tidak hilang
     useEffect(() => {
       const tplSimple = content.systemEnvironment?.template?.simple;
-      const simpleState = content.systemEnvironment?.simple;
-      if (!tplSimple || !simpleState) return;
-
+      if (!tplSimple) return;
       const keys = ['frontend_lang','app_info','account_availability','db_availability','db_info'];
-      let changed = false;
-      const nextSimple = { ...simpleState };
-
-      keys.forEach((k) => {
-        const list = Array.isArray(simpleState[k]) ? simpleState[k] : [];
-        const tplList = Array.isArray(tplSimple[k]) ? tplSimple[k] : [];
-
-        const updatedList = list.map((item) => {
-          const match = tplList.find((opt) => opt.label === item.label);
-          const is_other = !!(match && match.is_other);
-          if (item.is_other !== is_other) {
-            changed = true;
-            return { ...item, is_other };
-          }
-          return item;
+      setContent((c) => {
+        const simpleState = c.systemEnvironment?.simple;
+        if (!simpleState) return c;
+        let changed = false;
+        const nextSimple = { ...simpleState };
+        keys.forEach((k) => {
+          const list = Array.isArray(simpleState[k]) ? simpleState[k] : [];
+          const tplList = Array.isArray(tplSimple[k]) ? tplSimple[k] : [];
+          const updatedList = list.map((item) => {
+            const match = tplList.find((opt) => opt.label === item.label);
+            const is_other = !!(match && match.is_other);
+            if (item.is_other !== is_other) { changed = true; return { ...item, is_other }; }
+            return item;
+          });
+          nextSimple[k] = updatedList;
         });
-
-        nextSimple[k] = updatedList;
-      });
-
-      if (changed) {
-        setContent((c) => ({
+        if (!changed) return c;
+        return {
           ...c,
-          systemEnvironment: {
-            ...c.systemEnvironment,
-            simple: nextSimple,
-          },
-        }));
-      }
-    }, [content.systemEnvironment?.template, content.systemEnvironment?.simple]);
+          systemEnvironment: { ...c.systemEnvironment, simple: nextSimple }
+        };
+      });
+    }, [content.systemEnvironment?.template]);
 
     const renderTable = (data, setKey) => {
       if (!data) return null;
@@ -667,6 +814,21 @@ export default function ProposalBuilderPage() {
       );
     };
 
+    // Local input for "Other" to avoid full-state re-renders while typing
+    const OtherTextInput = ({ value, onCommit }) => {
+      const [val, setVal] = useState(value || '');
+      useEffect(() => { setVal(value || ''); }, [value]);
+      return (
+        <input
+          placeholder="Please specify..."
+          value={val}
+          onChange={(e)=> setVal(e.target.value)}
+          onBlur={()=> onCommit(val)}
+          className="ml-2 border border-gray-300 rounded p-1 text-sm"
+        />
+      );
+    };
+
     const renderSimpleList = (key, title) => {
       const list = (content.systemEnvironment?.simple || {})[key] || [];
       if (!list.length) return null;
@@ -705,7 +867,7 @@ export default function ProposalBuilderPage() {
               <h3 className="font-semibold mb-2">{title}</h3>
               <div className="flex flex-row flex-wrap gap-4">
                 {list.map((item, idx) => (
-                  <div key={idx} className="flex items-center">
+                  <div key={`${item.label || idx}`} className="flex items-center">
                     <input
                       type={isRadio ? "radio" : "checkbox"}
                       id={`${key}-${idx}`}
@@ -714,23 +876,21 @@ export default function ProposalBuilderPage() {
                       checked={!!item.checked}
                       onChange={isRadio ? () => handleRadioChange(idx) : (e) => handleCheckboxChange(e, idx)}
                       className="mr-2"
-                    />
+                      />
                     <label htmlFor={`${key}-${idx}`} className="text-sm">{item.label}</label>
                     {item.is_other && item.checked && (
-                      <input
-                        placeholder="Please specify..."
+                      <OtherTextInput
                         value={item.otherText || ''}
-                        onChange={(e)=> setContent(c=> ({
+                        onCommit={(val)=> setContent(c=> ({
                           ...c,
                           systemEnvironment: {
                             ...c.systemEnvironment,
                             simple: {
                               ...c.systemEnvironment.simple,
-                              [key]: c.systemEnvironment.simple[key].map((it,i)=> i!==idx ? it : { ...it, otherText: e.target.value })
+                              [key]: c.systemEnvironment.simple[key].map((it,i)=> i!==idx ? it : { ...it, otherText: val })
                             }
                           }
                         }))}
-                        className="ml-2 border border-gray-300 rounded p-1 text-sm"
                       />
                     )}
                   </div>
