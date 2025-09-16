@@ -460,6 +460,56 @@ export const deleteProject = async (id: number): Promise<void> => {
   }
 };
 
+// ===== MODULE CATALOG API FUNCTIONS =====
+
+/**
+ * Cari main modules dengan opsi include relasi dan pagination
+ * @param params - Parameter pencarian dan include
+ * @returns Promise array main modules (paginated data.data)
+ */
+export const searchMainModules = async (params: {
+  search: string;
+  with_sub_modules?: boolean;
+  with_features?: boolean;
+  is_active?: boolean;
+  per_page?: number;
+  sort_by?: string;
+  sort_order?: string;
+}): Promise<any[]> => {
+  const qs = new URLSearchParams();
+  qs.set('search', params.search || '');
+  if (params.with_sub_modules) qs.set('with_sub_modules', 'true');
+  if (params.with_features) qs.set('with_features', 'true');
+  if (typeof params.is_active === 'boolean') qs.set('is_active', String(params.is_active));
+  if (params.per_page) qs.set('per_page', String(params.per_page));
+  if (params.sort_by) qs.set('sort_by', params.sort_by);
+  if (params.sort_order) qs.set('sort_order', params.sort_order);
+
+  const response = await apiCall(`/api/main-modules?${qs.toString()}`);
+  const json = await response.json();
+  if (!response.ok || !json?.success) {
+    const message = json?.message || 'Gagal mengambil main modules';
+    throw new Error(message);
+  }
+  // Laravel pagination object has { data: [...], ... }
+  return Array.isArray(json.data?.data) ? json.data.data : [];
+};
+
+/**
+ * Ambil sub module lengkap dengan features dan conditions
+ * @param id - ID sub module
+ * @returns Promise object sub module lengkap
+ */
+export const getSubModuleComplete = async (id: number | string): Promise<any> => {
+  const response = await apiCall(`/api/sub-modules/${id}/complete`);
+  const json = await response.json();
+  if (!response.ok || !json?.success) {
+    const message = json?.message || 'Gagal mengambil detail sub module';
+    throw new Error(message);
+  }
+  return json.data;
+};
+
 // ===== PROPOSAL API FUNCTIONS =====
 
 /**

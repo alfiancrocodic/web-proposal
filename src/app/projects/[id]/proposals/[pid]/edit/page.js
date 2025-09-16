@@ -3,7 +3,7 @@ import { useEffect, useMemo, useState, Fragment, useRef } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
-import { getProposalTemplates, getProposalContent, putProposalContent } from '@/lib/api';
+import { getProposalTemplates, getProposalContent, putProposalContent, getProject, getProposal, searchMainModules, getSubModuleComplete } from '@/lib/api';
 
 const PlusIcon = ({ className = "w-5 h-5" }) => (
     <svg className={className} xmlns="http://www.w.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -25,8 +25,8 @@ const XIcon = ({ className = "w-4 h-4" }) => (
 
 const DEFAULT_CONTENT = {
   systemEnvironment: { platforms: [], notes: '' },
-  featureSales: [],
-  featureAdmin: [],
+  // Semua fitur per role disimpan di sini
+  featuresByRole: {},
   financialBreakdown: [],
   termsOfPayment: [],
   termsAndConditions: [],
@@ -40,7 +40,7 @@ export default function ProposalBuilderPage() {
   const [project, setProject] = useState(null);
   const [proposal, setProposal] = useState(null);
   const [content, setContent] = useState(DEFAULT_CONTENT);
-  const [activeTab, setActiveTab] = useState(1);
+  const [activeTab, setActiveTab] = useState('system');
   
   // State untuk modal input
   const [showModal, setShowModal] = useState(false);
@@ -48,20 +48,37 @@ export default function ProposalBuilderPage() {
   const [modalTitle, setModalTitle] = useState('');
   const [inputValue, setInputValue] = useState('');
   const [modalCallback, setModalCallback] = useState(null);
-  const tabs = [
-    { id: 1, title: 'System Environment' },
-    { id: 2, title: 'Feature Sales' },
-    { id: 3, title: 'Feature Admin' },
-    { id: 4, title: 'Financial Breakdown' },
-    { id: 5, title: 'Terms of Payment' },
-    { id: 6, title: 'Terms & Conditions' },
-  ];
+  const tabs = useMemo(() => {
+    const rawRoles = Array.isArray(project?.roles) ? project.roles : [];
+    const roleTabs = rawRoles.map((r, idx) => {
+      const name = typeof r === 'string' ? r : (r?.name || '');
+      const roleName = String(name || '').trim();
+      const safe = roleName || `Role ${idx + 1}`;
+      return {
+        key: `role:${safe}`,
+        title: safe,
+        type: 'role',
+        roleName: roleName || safe,
+      };
+    });
+    return [
+      { key: 'system', title: 'System Environment', type: 'system' },
+      ...roleTabs,
+      { key: 'financial', title: 'Financial Breakdown', type: 'financial' },
+      { key: 'payment', title: 'Terms of Payment', type: 'payment' },
+      { key: 'terms', title: 'Terms & Conditions', type: 'terms' },
+    ];
+  }, [project?.roles]);
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('auth')) router.replace('/login');
+    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
+      router.replace('/login');
+      return;
+    }
     if (!projectId || !pid) return;
-    fetch(`/api/projects/${projectId}`).then(r=>r.json()).then(setProject);
-    fetch(`/api/proposals/${pid}`).then(r=>r.json()).then(setProposal);
+    // Use backend API helpers (Laravel)
+    getProject(projectId).then(setProject).catch(()=>{});
+    getProposal(pid).then(setProposal).catch(()=>{});
     (async () => {
       const d = await getProposalContent(pid);
       const next = { ...DEFAULT_CONTENT, ...d };
@@ -122,6 +139,35 @@ export default function ProposalBuilderPage() {
           }
         }
       } catch(e) {}
+
+      // Migrasi data lama ke struktur baru featuresByRole
+      // 1) Sales: pindahkan featureSales -> featuresByRole['Sales']
+      if (Array.isArray(next.featureSales) && next.featureSales.length) {
+        next.featuresByRole = {
+          ...(next.featuresByRole || {}),
+          ['Sales']: next.featureSales,
+        };
+        delete next.featureSales;
+      }
+      // 2) Admin: pindahkan featureAdmin (groups/items) -> modular (Main Module: 'Admin', Sub Module: group)
+      if (Array.isArray(next.featureAdmin) && next.featureAdmin.length) {
+        const subModules = next.featureAdmin.map((g) => ({
+          name: g?.group || 'General',
+          features: (Array.isArray(g?.items) ? g.items : []).map((it) => ({
+            name: it?.name || 'Feature',
+            mandays: 0,
+            // Jadikan nilai condition lama sebagai nama kondisi tunggal
+            conditions: it?.condition ? [{ name: it.condition }] : [],
+          })),
+        }));
+        const adminModule = [{ id: Date.now() + Math.random(), name: 'Admin', sub_modules: subModules }];
+        next.featuresByRole = {
+          ...(next.featuresByRole || {}),
+          ['Admin']: adminModule,
+        };
+        delete next.featureAdmin;
+      }
+
       setContent(next);
     })();
   }, [router, projectId, pid]);
@@ -131,23 +177,29 @@ export default function ProposalBuilderPage() {
     router.push(`/projects/${projectId}`);
   };
 
-  const addGroup = (key) => setContent(c => ({ ...c, [key]: [...c[key], { group: 'New Group', items: [] }] }));
-  const addItem = (key, gi) => setContent(c => ({ ...c, [key]: c[key].map((g,i)=> i!==gi? g: { ...g, items: [...g.items, { name: 'New Feature', condition: '' }]}) }));
-  const removeItem = (key, gi, ii) => setContent(c => ({ ...c, [key]: c[key].map((g,i)=> i!==gi? g: { ...g, items: g.items.filter((_,j)=>j!==ii) }) }));
-
-  const addMainModule = (module) => {
-    setContent(c => ({
-      ...c,
-      featureSales: [...c.featureSales, module]
-    }));
+  // Helpers for role-based feature modules storage (all roles use featuresByRole)
+  const getRoleModules = (roleName, state = content) => {
+    const rn = String(roleName || '').trim();
+    if (!state.featuresByRole) return [];
+    return state.featuresByRole[rn] || [];
   };
 
-  const removeMainModule = (index) => {
-    setContent(c => ({
-      ...c,
-      featureSales: c.featureSales.filter((_, i) => i !== index)
-    }));
+  const setRoleModules = (roleName, updater) => {
+    const rn = String(roleName || '').trim();
+    setContent((c) => {
+      const prev = getRoleModules(rn, c) || [];
+      const next = typeof updater === 'function' ? updater(prev) : updater;
+      return {
+        ...c,
+        featuresByRole: {
+          ...(c.featuresByRole || {}),
+          [rn]: next,
+        },
+      };
+    });
   };
+
+  // Removed old simple feature/group helpers and sample Sales helpers
 
   // Fungsi untuk membuka modal input
   const openModal = (type, title, callback) => {
@@ -175,94 +227,19 @@ export default function ProposalBuilderPage() {
     }
   };
 
-  const addSubModule = (mainIndex) => {
-    openModal('submodule', 'Masukkan nama Sub Modul:', (name) => {
-      const newSubModule = { 
-        name: name, 
-        features: [],
-        subModuleId: null // Manual sub module tidak memiliki ID dari backend
-      };
-      setContent(c => ({
-        ...c,
-        featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : { ...m, sub_modules: [...m.sub_modules, newSubModule] })
-      }));
-    });
-  };
-
-  const removeSubModule = (mainIndex, subIndex) => {
-    setContent(c => ({
-      ...c,
-      featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : { ...m, sub_modules: m.sub_modules.filter((_, si) => si !== subIndex) })
-    }));
-  };
-
-  // Fungsi untuk menambah feature manual
-  const addFeature = (mainIndex, subIndex) => {
-    openModal('feature', 'Masukkan nama Feature:', (name) => {
-      setContent(c => ({
-        ...c,
-        featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : {
-          ...m,
-          sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : {
-            ...sm,
-            features: [...sm.features, { name: name, mandays: 0, conditions: [] }]
-          })
-        })
-      }));
-    });
-  };
-
-  // Fungsi untuk menambah condition manual
-  const addCondition = (mainIndex, subIndex, featureIndex) => {
-    openModal('condition', 'Masukkan nama Condition:', (name) => {
-      setContent(c => ({
-        ...c,
-        featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : {
-          ...m,
-          sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : {
-            ...sm,
-            features: sm.features.map((f, fi) => fi !== featureIndex ? f : {
-              ...f,
-              conditions: [...(f.conditions || []), { name: name, condition_text: '' }]
-            })
-          })
-        })
-      }));
-    });
-  };
-
-  // Fungsi untuk menghapus condition
-  const removeCondition = (mainIndex, subIndex, featureIndex, conditionIndex) => {
-    setContent(c => ({
-      ...c,
-      featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : {
-        ...m,
-        sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : {
-          ...sm,
-          features: sm.features.map((f, fi) => fi !== featureIndex ? f : {
-            ...f,
-            conditions: (f.conditions || []).filter((_, ci) => ci !== conditionIndex)
-          })
-        })
-      })
-    }));
-  };
-  
-  const removeFeature = (mainIndex, subIndex, featureIndex) => {
-    setContent(c => ({
-      ...c,
-      featureSales: c.featureSales.map((m, i) => i !== mainIndex ? m : {
-        ...m,
-        sub_modules: m.sub_modules.map((sm, si) => si !== subIndex ? sm : { ...sm, features: sm.features.filter((_, fi) => fi !== featureIndex) })
-      })
-    }));
-  };
+  // Removed old sample Sales operations
 
   const addSection = (key) => setContent(c => ({ ...c, [key]: [...c[key], { section: 'New Section', items: [] }] }));
   const addFbItem = (si) => setContent(c => ({ ...c, financialBreakdown: c.financialBreakdown.map((s,i)=> i!==si? s: { ...s, items: [...s.items, { activity: 'Activity', resource: 'Resource', quantity: 1, mandays: 0, price: 0, parallel: false, hide: false }]}) }));
   const currency = (n) => new Intl.NumberFormat('id-ID').format(+n||0);
 
-  const TabFeatureSales = () => {
+  // removed legacy Feature Sales leftover helpers
+
+
+  // Role feature tab using the same UX as Sales, but stored per role
+  const TabRoleFeatureModules = ({ roleName }) => {
+    const rn = (roleName || '').trim();
+    const modules = getRoleModules(rn);
     const [search, setSearch] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [selectedModules, setSelectedModules] = useState([]);
@@ -270,454 +247,243 @@ export default function ProposalBuilderPage() {
     const [selectedSubModules, setSelectedSubModules] = useState({});
     const dropdownRef = useRef(null);
 
-    // Effect untuk menutup dropdown ketika klik di luar
     useEffect(() => {
       const handleClickOutside = (event) => {
         if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
           setShowDropdown(false);
         }
       };
-
       document.addEventListener('mousedown', handleClickOutside);
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
+      return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Fungsi untuk melakukan pencarian
     const handleSearch = async (searchTerm) => {
-      if (!searchTerm.trim()) {
-        setSearchResults([]);
-        setShowDropdown(false);
-        return;
-      }
-      
+      if (!searchTerm.trim()) { setSearchResults([]); setShowDropdown(false); return; }
       try {
-        // Menggunakan backend Laravel dengan autentikasi
-        const token = localStorage.getItem('auth_token');
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001'}/api/main-modules?search=${searchTerm}&with_sub_modules=true&with_features=true`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
-        const response = await res.json();
-        // Backend Laravel mengembalikan data dalam format { success, message, data }
-        const data = response.success ? response.data.data : [];
+        const data = await searchMainModules({ search: searchTerm, with_sub_modules: true, with_features: true });
         setSearchResults(data);
         setShowDropdown(true);
-      } catch (error) {
-        console.error('Error fetching modules:', error);
+      } catch (e) {
+        console.error('Error fetching modules:', e);
         setSearchResults([]);
       }
     };
 
-    // Fungsi untuk menangani perubahan input pencarian
-    const handleInputChange = (e) => {
-      const value = e.target.value;
-      setSearch(value);
-      handleSearch(value);
-    };
+    const handleInputChange = (e) => { const v = e.target.value; setSearch(v); handleSearch(v); };
 
-    // Fungsi untuk menangani seleksi sub modul
     const handleSubModuleToggle = (mainModuleId, subModuleId) => {
       setSelectedSubModules(prev => {
         const key = `${mainModuleId}-${subModuleId}`;
-        const newSelection = { ...prev };
-        
-        if (newSelection[key]) {
-          delete newSelection[key];
-        } else {
+        const next = { ...prev };
+        if (next[key]) delete next[key]; else {
           const mainModule = searchResults.find(m => m.id === mainModuleId);
           const subModule = mainModule?.sub_modules.find(sm => sm.id === subModuleId);
           if (subModule) {
-            newSelection[key] = {
-              mainModuleId,
-              subModuleId,
-              mainModuleName: mainModule.name,
-              subModuleName: subModule.name,
-              features: subModule.features || []
-            };
+            next[key] = { mainModuleId, subModuleId, mainModuleName: mainModule.name, subModuleName: subModule.name, features: subModule.features || [] };
           }
         }
-        
-        return newSelection;
+        return next;
       });
     };
 
-    // Fungsi untuk menambahkan modul yang dipilih ke dalam chips
-    const addSelectedModule = (module) => {
-      if (!selectedModules.find(m => m.id === module.id)) {
-        setSelectedModules(prev => [...prev, module]);
-      }
-    };
-
-    // Fungsi untuk menghapus chip
+    const addSelectedModule = (module) => { if (!selectedModules.find(m => m.id === module.id)) setSelectedModules(prev => [...prev, module]); };
     const removeSelectedModule = (moduleId) => {
       setSelectedModules(prev => prev.filter(m => m.id !== moduleId));
-      // Hapus juga sub modul yang terkait
-      setSelectedSubModules(prev => {
-        const newSelection = { ...prev };
-        Object.keys(newSelection).forEach(key => {
-          if (key.startsWith(`${moduleId}-`)) {
-            delete newSelection[key];
-          }
-        });
-        return newSelection;
-      });
+      setSelectedSubModules(prev => { const next = { ...prev }; Object.keys(next).forEach(k => { if (k.startsWith(`${moduleId}-`)) delete next[k]; }); return next; });
     };
 
-    // Fungsi untuk mengambil data features dan conditions dari backend
     const fetchSubModuleComplete = async (subModuleId) => {
       try {
-        const token = localStorage.getItem('auth_token');
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001'}/api/sub-modules/${subModuleId}/complete`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
-        }
-        
-        const response = await res.json();
-        return response.success ? response.data : null;
-      } catch (error) {
-        console.error('Error fetching sub module complete data:', error);
+        return await getSubModuleComplete(subModuleId);
+      } catch (e) {
+        console.error('Error fetching sub module complete data:', e);
         return null;
       }
     };
 
-    // Fungsi untuk menambahkan data ke tabel
     const handleAddToTable = async () => {
       const selectedData = Object.values(selectedSubModules);
-      
-      // Ambil data lengkap features dan conditions untuk setiap sub modul
-      const enrichedData = await Promise.all(
-        selectedData.map(async (item) => {
-          const completeData = await fetchSubModuleComplete(item.subModuleId);
-          return {
-            ...item,
-            features: completeData?.features || item.features || []
-          };
-        })
-      );
-      
-      // Kelompokkan sub modul berdasarkan main modul
-      const groupedByMainModule = enrichedData.reduce((acc, item) => {
-        if (!acc[item.mainModuleName]) {
-          acc[item.mainModuleName] = {
-            mainModuleName: item.mainModuleName,
-            subModules: []
-          };
-        }
-        acc[item.mainModuleName].subModules.push({
-          id: item.subModuleId,
-          name: item.subModuleName,
-          features: item.features
-        });
+      const enrichedData = await Promise.all(selectedData.map(async (item) => {
+        const completeData = await fetchSubModuleComplete(item.subModuleId);
+        return { ...item, features: completeData?.features || item.features || [] };
+      }));
+      const grouped = enrichedData.reduce((acc, item) => {
+        if (!acc[item.mainModuleName]) acc[item.mainModuleName] = { mainModuleName: item.mainModuleName, subModules: [] };
+        acc[item.mainModuleName].subModules.push({ id: item.subModuleId, name: item.subModuleName, features: item.features });
         return acc;
       }, {});
-      
-      // Tambahkan atau gabungkan dengan main modul yang sudah ada
-      Object.values(groupedByMainModule).forEach(group => {
-        const existingMainModuleIndex = content.featureSales.findIndex(
-          module => module.name === group.mainModuleName
-        );
-        
-        if (existingMainModuleIndex >= 0) {
-          // Gabungkan dengan main modul yang sudah ada
-          setContent(c => ({
-            ...c,
-            featureSales: c.featureSales.map((module, index) => {
-              if (index === existingMainModuleIndex) {
-                return {
-                  ...module,
-                  sub_modules: [...module.sub_modules, ...group.subModules]
-                };
-              }
-              return module;
-            })
-          }));
-        } else {
-          // Buat main modul baru
-          const newModule = {
-            id: Date.now() + Math.random(),
-            name: group.mainModuleName,
-            sub_modules: group.subModules
-          };
-          addMainModule(newModule);
-        }
+      setRoleModules(rn, (prev) => {
+        let next = Array.isArray(prev) ? [...prev] : [];
+        Object.values(grouped).forEach((group) => {
+          const idx = next.findIndex((m) => m.name === group.mainModuleName);
+          if (idx >= 0) next[idx] = { ...next[idx], sub_modules: [...(next[idx].sub_modules || []), ...group.subModules] };
+          else next.push({ id: Date.now() + Math.random(), name: group.mainModuleName, sub_modules: group.subModules });
+        });
+        return next;
       });
-      
-      // Reset form
-      setSearch('');
-      setSearchResults([]);
-      setSelectedModules([]);
-      setSelectedSubModules({});
-      setShowDropdown(false);
+      setSearch(''); setSearchResults([]); setSelectedModules([]); setSelectedSubModules({}); setShowDropdown(false);
     };
 
     return (
-        <div className="space-y-6 bg-white border rounded-xl p-6 shadow-sm">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Feature Sales</h2>
-                <div className="flex items-center space-x-2">
-                    <button className="px-4 py-2 text-sm font-semibold text-green-700 bg-green-100 rounded-lg">Android Phone</button>
-                    <button className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg">iOS iPhone</button>
-                </div>
-            </div>
-            
-            {/* Search Form */}
-            <div className="bg-white p-6 rounded-lg border">
-                <h3 className="text-lg font-semibold mb-4">Pencarian Modul</h3>
-                
-                {/* Search Input with Chips */}
-                 <div className="relative" ref={dropdownRef}>
-                    <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg min-h-[50px] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
-                        {/* Selected Module Chips */}
-                        {selectedModules.map((module) => (
-                            <div key={module.id} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
-                                <span>{module.name}</span>
-                                <button
-                                    onClick={() => removeSelectedModule(module.id)}
-                                    className="ml-2 text-blue-600 hover:text-blue-800"
-                                >
-                                    ×
-                                </button>
-                            </div>
-                        ))}
-                        
-                        {/* Search Input */}
-                        <input
-                            type="text"
-                            value={search}
-                            onChange={handleInputChange}
-                            onFocus={() => search && setShowDropdown(true)}
-                            placeholder={selectedModules.length === 0 ? "Cari nama Main Modul..." : ""}
-                            className="flex-1 min-w-[200px] outline-none bg-transparent"
-                        />
-                    </div>
-                    
-                    {/* Dropdown Results */}
-                    {showDropdown && searchResults.length > 0 && (
-                        <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
-                            {searchResults.map((module) => (
-                                <div key={module.id} className="border-b border-gray-100 last:border-b-0">
-                                    {/* Main Module Header */}
-                                    <div 
-                                        className="p-4 hover:bg-gray-50 cursor-pointer flex justify-between items-center"
-                                        onClick={() => addSelectedModule(module)}
-                                    >
-                                        <div>
-                                            <div className="font-medium text-gray-900">{module.name}</div>
-                                            <div className="text-sm text-gray-500">{module.sub_modules?.length || 0} Sub Modul</div>
-                                        </div>
-                                        <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">
-                                            Pilih
-                                        </button>
-                                    </div>
-                                    
-                                    {/* Sub Modules */}
-                                    {module.sub_modules && module.sub_modules.length > 0 && (
-                                        <div className="pl-6 pb-4">
-                                            <div className="text-sm font-medium text-gray-700 mb-2">Sub Modul:</div>
-                                            <div className="space-y-2">
-                                                {module.sub_modules.map((subModule) => (
-                                                    <label key={subModule.id} className="flex items-start space-x-3 cursor-pointer">
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={!!selectedSubModules[`${module.id}-${subModule.id}`]}
-                                                            onChange={() => handleSubModuleToggle(module.id, subModule.id)}
-                                                            className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                                        />
-                                                        <div className="flex-1">
-                                                            <div className="text-sm font-medium text-gray-900">{subModule.name}</div>
-                                                            {subModule.features && subModule.features.length > 0 && (
-                                                                <div className="text-xs text-gray-500 mt-1">
-                                                                    {subModule.features.length} Feature(s)
-                                                                </div>
-                                                            )}
-                                                        </div>
-                                                    </label>
-                                                ))}
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-                
-                {/* Add Button */}
-                {Object.keys(selectedSubModules).length > 0 && (
-                    <div className="mt-4 flex justify-end">
-                        <button
-                            onClick={handleAddToTable}
-                            className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500"
-                        >
-                            Add ({Object.keys(selectedSubModules).length} item)
-                        </button>
-                    </div>
-                )}
-                
-                {/* Selected Sub Modules Preview */}
-                {Object.keys(selectedSubModules).length > 0 && (
-                    <div className="mt-4 p-4 bg-white border rounded-lg">
-                        <h4 className="font-medium mb-2 text-gray-700">Sub Modul yang Dipilih:</h4>
-                        <div className="space-y-2">
-                            {Object.values(selectedSubModules).map((item, index) => (
-                                <div key={index} className="text-sm text-gray-600">
-                                    <span className="font-medium">{item.mainModuleName}</span> → {item.subModuleName}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )}
-            </div>
-
-            <div className="space-y-6">
-                {/* Header Tabel */}
-                <div className="grid grid-cols-12 gap-x-4 text-sm font-semibold text-gray-700 px-4 py-3 bg-white border rounded-md shadow-sm">
-                    <div className="col-span-2">Main Modul</div>
-                    <div className="col-span-2">Sub Modul</div>
-                    <div className="col-span-3">Features</div>
-                    <div className="col-span-4">Condition</div>
-                    <div className="col-span-1 text-right">Mandays</div>
-                </div>
-
-                {/* Konten Tabel */}
-                {content.featureSales.map((mainModule, mainIndex) => (
-                    <div key={mainIndex} className="bg-white border rounded-lg shadow-sm overflow-hidden">
-                        {mainModule.sub_modules.map((subModule, subIndex) => (
-                            <Fragment key={subIndex}>
-                                {(Array.isArray(subModule.features) && subModule.features.length > 0 ? subModule.features : [null]).map((feature, fIdx) => (
-                                    <div key={`${subIndex}-${fIdx}`} className="grid grid-cols-12 gap-x-4 items-start p-4 hover:bg-gray-50 border-b last:border-b-0">
-                                        {/* Main Modul - tampil di subIndex 0 dan fIdx 0 */}
-                                        {(subIndex === 0 && fIdx === 0) ? (
-                                            <div className="col-span-2">
-                                                <div className="bg-white border border-blue-300 text-blue-800 rounded-md p-2 flex items-center justify-between">
-                                                    <span className="font-semibold text-sm">{mainModule.name}</span>
-                                                    <button onClick={() => removeMainModule(mainIndex)} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Main Modul">
-                                                        <XIcon className="w-3 h-3" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="col-span-2"></div>
-                                        )}
-
-                                        {/* Sub Modul - tampil di fIdx 0 */}
-                                        {fIdx === 0 ? (
-                                            <div className="col-span-2">
-                                                <div className="bg-white border rounded-md p-2 flex items-center justify-between">
-                                                    <span className="font-medium text-gray-800 text-sm">{subModule.name}</span>
-                                                    <button onClick={() => removeSubModule(mainIndex, subIndex)} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Sub Modul">
-                                                        <XIcon className="w-3 h-3" />
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="col-span-2"></div>
-                                        )}
-
-                                        {/* Feature */}
-                                        <div className="col-span-3">
-                                            {feature ? (
-                                                <div className="bg-white border rounded-md p-2 flex items-center justify-between">
-                                                    <span className="text-sm">{feature.name}</span>
-                                                    <button onClick={() => removeFeature(mainIndex, subIndex, fIdx)} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Feature">
-                                                        <XIcon className="w-3 h-3" />
-                                                    </button>
-                                                </div>
-                                            ) : null}
-                                        </div>
-
-                                        {/* Conditions untuk feature */}
-                                        <div className="col-span-4 space-y-2">
-                                            {feature && Array.isArray(feature.conditions) && feature.conditions.length > 0 ? (
-                                                feature.conditions.map((condition, cIdx) => (
-                                                    <div key={cIdx} className="bg-white border rounded-md p-2 text-sm flex justify-between items-start">
-                                                        <div className="flex-1">
-                                                            <div className="font-medium text-gray-800 text-sm">{condition.name}</div>
-                                                            {condition.condition_text && (
-                                                                <div className="text-gray-700 mt-1 whitespace-pre-line">{condition.condition_text}</div>
-                                                            )}
-                                                        </div>
-                                                        <button onClick={() => removeCondition(mainIndex, subIndex, fIdx, cIdx)} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50 ml-2" title="Hapus Condition">
-                                                            <XIcon className="w-3 h-3" />
-                                                        </button>
-                                                    </div>
-                                                ))
-                                            ) : null}
-                                            {/* Tombol Tambah Condition */}
-                                            {feature && (
-                                                <button className="text-blue-600 p-1 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300 w-full text-xs" onClick={() => addCondition(mainIndex, subIndex, fIdx)}>
-                                                    <PlusIcon className="w-3 h-3" /> <span>Tambah Condition</span>
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        {/* Mandays - tampil di fIdx 0 */}
-                                        {fIdx === 0 ? (
-                                            <div className="col-span-1 flex justify-end">
-                                                <div className="bg-blue-50 text-blue-800 font-semibold rounded-md p-2 w-16 text-center">
-                                                    {subModule.features.reduce((acc, f) => (acc + (parseFloat(f.mandays) || 0)), 0)}
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <div className="col-span-1"></div>
-                                        )}
-                                    </div>
-                                ))}
-
-                                {/* Tombol Tambah Feature - di baris sendiri setelah daftar feature */}
-                                <div className="grid grid-cols-12 gap-x-4 items-start p-4 border-b last:border-b-0">
-                                    <div className="col-span-2"></div>
-                                    <div className="col-span-2"></div>
-                                    <div className="col-span-3">
-                                        <button className="text-blue-600 p-1 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300 w-full text-xs" onClick={() => addFeature(mainIndex, subIndex)}>
-                                            <PlusIcon className="w-3 h-3" /> <span>Tambah Feature</span>
-                                        </button>
-                                    </div>
-                                    <div className="col-span-4"></div>
-                                    <div className="col-span-1"></div>
-                                </div>
-                            </Fragment>
-                        ))}
-                        <div className="px-4 py-3 bg-white border-t">
-                            <button 
-                                className="text-blue-600 p-1 text-xs flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300" 
-                                onClick={() => addSubModule(mainIndex)}
-                            >
-                                <PlusIcon className="w-4 h-4" /> <span>Tambah Sub Modul</span>
-                            </button>
-                        </div>
-                    </div>
-                ))}
-                
-                {/* Pesan jika tidak ada data */}
-                {content.featureSales.length === 0 && (
-                    <div className="text-center py-12 text-gray-500">
-                        <p className="text-lg mb-2">Belum ada modul yang ditambahkan</p>
-                        <p className="text-sm">Gunakan pencarian di atas untuk menambahkan modul</p>
-                    </div>
-                )}
-            </div>
+      <div className="space-y-6 bg-white border rounded-xl p-6 shadow-sm">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-bold">{rn} Features</h2>
+          <div className="flex items-center space-x-2">
+            <button className="px-4 py-2 text-sm font-semibold text-green-700 bg-green-100 rounded-lg">Android Phone</button>
+            <button className="px-4 py-2 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg">iOS iPhone</button>
+          </div>
         </div>
+
+        {/* Search Form */}
+        <div className="bg-white p-6 rounded-lg border">
+          <h3 className="text-lg font-semibold mb-4">Pencarian Modul</h3>
+          <div className="relative" ref={dropdownRef}>
+            <div className="flex flex-wrap gap-2 p-3 border border-gray-300 rounded-lg min-h-[50px] focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+              {selectedModules.map((module) => (
+                <div key={module.id} className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
+                  <span>{module.name}</span>
+                  <button onClick={() => removeSelectedModule(module.id)} className="ml-2 text-blue-600 hover:text-blue-800">×</button>
+                </div>
+              ))}
+              <input type="text" value={search} onChange={handleInputChange} onFocus={() => search && setShowDropdown(true)} placeholder={selectedModules.length === 0 ? "Cari nama Main Modul..." : ""} className="flex-1 min-w-[200px] outline-none bg-transparent" />
+            </div>
+            {showDropdown && searchResults.length > 0 && (
+              <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-lg shadow-lg max-h-96 overflow-y-auto">
+                {searchResults.map((module) => (
+                  <div key={module.id} className="border-b border-gray-100 last:border-b-0">
+                    <div className="p-4 hover:bg-gray-50 cursor-pointer flex justify-between items-center" onClick={() => addSelectedModule(module)}>
+                      <div>
+                        <div className="font-medium text-gray-900">{module.name}</div>
+                        <div className="text-sm text-gray-500">{module.sub_modules?.length || 0} Sub Modul</div>
+                      </div>
+                      <button className="text-blue-600 hover:text-blue-800 text-sm font-medium">Pilih</button>
+                    </div>
+                    {module.sub_modules && module.sub_modules.length > 0 && (
+                      <div className="pl-6 pb-4">
+                        <div className="text-sm font-medium text-gray-700 mb-2">Sub Modul:</div>
+                        <div className="space-y-2">
+                          {module.sub_modules.map((subModule) => (
+                            <label key={subModule.id} className="flex items-start space-x-3 cursor-pointer">
+                              <input type="checkbox" checked={!!selectedSubModules[`${module.id}-${subModule.id}`]} onChange={() => handleSubModuleToggle(module.id, subModule.id)} className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded" />
+                              <div className="flex-1">
+                                <div className="text-sm font-medium text-gray-900">{subModule.name}</div>
+                                {subModule.features && subModule.features.length > 0 && (
+                                  <div className="text-xs text-gray-500 mt-1">{subModule.features.length} Feature(s)</div>
+                                )}
+                              </div>
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          {Object.keys(selectedSubModules).length > 0 && (
+            <div className="mt-4 flex justify-end">
+              <button onClick={handleAddToTable} className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:ring-2 focus:ring-green-500">Add ({Object.keys(selectedSubModules).length} item)</button>
+            </div>
+          )}
+        </div>
+
+        {/* Table */}
+        <div className="space-y-6">
+          <div className="grid gap-x-4 text-sm font-semibold text-gray-700 px-4 py-3 bg-white border border-gray-300 rounded-md shadow-sm" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 80px' }}>
+            <div>Main Modul</div>
+            <div>Sub Modul</div>
+            <div>Features</div>
+            <div>Condition</div>
+            <div className="text-right">Mandays</div>
+          </div>
+          {modules.map((mainModule, mainIndex) => (
+            <div key={mainIndex} className="bg-white border border-gray-300 rounded-lg shadow-sm overflow-hidden">
+              {mainModule.sub_modules.map((subModule, subIndex) => (
+                <Fragment key={subIndex}>
+                  {(Array.isArray(subModule.features) && subModule.features.length > 0 ? subModule.features : [null]).map((feature, fIdx) => (
+                    <div key={`${subIndex}-${fIdx}`} className="grid gap-x-4 items-start p-4 hover:bg-gray-50 border-b border-gray-200 last:border-b-0" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 80px' }}>
+                      {(subIndex === 0 && fIdx === 0) ? (
+                        <div>
+                          <div className="bg-white border border-blue-300 text-blue-800 rounded-md p-2 flex items-center justify-between">
+                            <span className="font-semibold text-sm">{mainModule.name}</span>
+                            <button onClick={() => setRoleModules(rn, (prev)=> prev.filter((_,i)=> i!==mainIndex))} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Main Modul"><XIcon className="w-3 h-3" /></button>
+                          </div>
+                        </div>
+                      ) : (<div></div>)}
+
+                      {fIdx === 0 ? (
+                        <div>
+                          <div className="bg-white border rounded-md p-2 flex items-center justify-between">
+                            <span className="font-medium text-gray-800 text-sm">{subModule.name}</span>
+                            <button onClick={() => setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.filter((_,si)=> si!==subIndex) }))} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Sub Modul"><XIcon className="w-3 h-3" /></button>
+                          </div>
+                        </div>
+                      ) : (<div></div>)}
+
+                      <div>
+                        {feature ? (
+                          <div className="flex items-center justify-between">
+                            <input value={feature.name} onChange={(e)=> setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: sm.features.map((f,fi)=> fi!==fIdx? f : { ...f, name: e.target.value }) }) }))} className="w-full border border-gray-300 rounded p-2 text-sm" />
+                            <button onClick={() => setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: sm.features.filter((_,fi)=> fi!==fIdx) }) }))} className="ml-2 text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Feature"><XIcon className="w-3 h-3" /></button>
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 text-sm italic">—</span>
+                        )}
+                      </div>
+                      <div>
+                        {feature ? (
+                          <div className="space-y-2">
+                            {(Array.isArray(feature.conditions) ? feature.conditions : []).map((cond, cIdx) => (
+                              <div key={cIdx} className="flex items-center gap-2">
+                                <input value={cond.name} onChange={(e)=> setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: sm.features.map((f,fi)=> fi!==fIdx? f : { ...f, conditions: (f.conditions||[]).map((cc,ci)=> ci!==cIdx? cc : { ...cc, name: e.target.value }) }) }) }))} className="flex-1 border border-gray-300 rounded p-2 text-sm" placeholder="Condition" />
+                                <button onClick={() => setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: sm.features.map((f,fi)=> fi!==fIdx? f : { ...f, conditions: (f.conditions||[]).filter((_,ci)=> ci!==cIdx) }) }) }))} className="text-red-600 hover:text-red-800 p-1 rounded-md hover:bg-red-50" title="Hapus Condition"><XIcon className="w-3 h-3" /></button>
+                              </div>
+                            ))}
+                            <button className="text-blue-600 p-1 text-xs flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300" onClick={() => openModal('condition', 'Masukkan nama Condition:', (name) => setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: sm.features.map((f,fi)=> fi!==fIdx? f : { ...f, conditions: [...(f.conditions||[]), { name }] }) }) })))}>
+                              <PlusIcon className="w-3 h-3" /> <span>Tambah Condition</span>
+                            </button>
+                          </div>
+                        ) : (<span className="text-gray-400 text-sm italic">—</span>)}
+                      </div>
+                      <div className="text-right">
+                        <input type="number" value={feature?.mandays || 0} onChange={(e)=> setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: sm.features.map((f,fi)=> fi!==fIdx? f : { ...f, mandays: Number(e.target.value) || 0 }) }) }))} className="w-20 border border-gray-300 rounded p-2 text-sm text-right" />
+                      </div>
+                    </div>
+                  ))}
+                  {/* Add Feature row */}
+                  <div className="grid gap-x-4 items-start p-4 border-b border-gray-200 last:border-b-0" style={{ gridTemplateColumns: '1fr 1fr 1fr 1fr 80px' }}>
+                    <div></div>
+                    <div></div>
+                    <div>
+                      <button className="text-blue-600 p-1 flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300 w-full text-xs" onClick={() => openModal('feature', 'Masukkan nama Feature:', (name) => setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: m.sub_modules.map((sm,si)=> si!==subIndex? sm : { ...sm, features: [...(sm.features||[]), { name, mandays: 0, conditions: [] }] }) })))}>
+                        <PlusIcon className="w-3 h-3" /> <span>Tambah Feature</span>
+                      </button>
+                    </div>
+                    <div></div>
+                    <div></div>
+                  </div>
+                </Fragment>
+              ))}
+              <div className="px-4 py-3 bg-white border-t border-gray-300">
+                <button className="text-blue-600 p-1 text-xs flex items-center space-x-1 rounded-md hover:bg-blue-50 border border-dashed border-blue-300" onClick={() => openModal('submodule', 'Masukkan nama Sub Modul:', (name) => setRoleModules(rn, (prev)=> prev.map((m,i)=> i!==mainIndex? m : { ...m, sub_modules: [...(m.sub_modules||[]), { name, features: [], subModuleId: null }] })))}>
+                  <PlusIcon className="w-4 h-4" /> <span>Tambah Sub Modul</span>
+                </button>
+              </div>
+            </div>
+          ))}
+          {modules.length === 0 && (
+            <div className="text-center py-12 text-gray-500">
+              <p className="text-lg mb-2">Belum ada modul yang ditambahkan</p>
+              <p className="text-sm">Gunakan pencarian di atas untuk menambahkan modul</p>
+            </div>
+          )}
+        </div>
+      </div>
     );
   };
 
+  
   const TabSystem = () => {
     const { systemEnvironment } = content;
     const { mobile, web, simple } = systemEnvironment;
@@ -1008,33 +774,7 @@ export default function ProposalBuilderPage() {
     );
   };
 
-  const TabFeatures = ({keyName}) => (
-    <div className="space-y-4">
-      <div className="flex justify-end">
-        <button onClick={()=>addGroup(keyName)} className="px-3 py-2 text-sm rounded-lg bg-blue-600 text-white">+ Group</button>
-      </div>
-      {content[keyName].map((g, gi) => (
-        <div key={gi} className="bg-white rounded-lg border p-4 space-y-3">
-          <input value={g.group} onChange={e=> setContent(c=> ({...c, [keyName]: c[keyName].map((x,i)=> i!==gi?x:{...x, group:e.target.value})}))} className="w-full border border-gray-300 rounded p-2 font-semibold" />
-          <div className="grid grid-cols-12 gap-3 text-sm">
-            <div className="col-span-5 font-bold text-gray-600">Feature</div>
-            <div className="col-span-6 font-bold text-gray-600">Condition</div>
-            <div className="col-span-1"></div>
-            {g.items.map((it, ii) => (
-              <Fragment key={`${keyName}-${gi}-${ii}`}>
-                <div className="col-span-5"><input value={it.name} onChange={e=> setContent(c=> ({...c, [keyName]: c[keyName].map((x,i)=> i!==gi?x:{...x, items: x.items.map((y,j)=> j!==ii?y:{...y, name:e.target.value})})}))} className="w-full border border-gray-300 rounded p-2" /></div>
-                <div className="col-span-6"><textarea value={it.condition||''} onChange={e=> setContent(c=> ({...c, [keyName]: c[keyName].map((x,i)=> i!==gi?x:{...x, items: x.items.map((y,j)=> j!==ii?y:{...y, condition:e.target.value})})}))} className="w-full border border-gray-300 rounded p-2" rows={2} /></div>
-                <div className="col-span-1 flex items-center justify-end"><button onClick={()=>removeItem(keyName, gi, ii)} className="text-gray-500">✕</button></div>
-              </Fragment>
-            ))}
-            <div className="col-span-12">
-              <button onClick={()=>addItem(keyName, gi)} className="px-3 py-1 text-sm rounded border border-gray-300">+ Feature</button>
-            </div>
-          </div>
-        </div>
-      ))}
-    </div>
-  );
+  // (removed legacy TabFeatures and TabFeaturesByRole)
 
   const TabFinancial = () => (
     <div className="space-y-4">
@@ -1167,15 +907,16 @@ export default function ProposalBuilderPage() {
   );
 
   const renderTab = () => {
-    switch (activeTab) {
-      case 1: return <TabSystem />;
-      case 2: return <TabFeatureSales />;
-      case 3: return <TabFeatures keyName="featureAdmin"/>;
-      case 4: return <TabFinancial />;
-      case 5: return <TabPayment />;
-      case 6: return <TabTerms />;
-      default: return null;
+    const tab = tabs.find(t => t.key === activeTab);
+    if (!tab) return null;
+    if (tab.type === 'system') return <TabSystem />;
+    if (tab.type === 'role') {
+      return <TabRoleFeatureModules roleName={tab.roleName} />;
     }
+    if (tab.type === 'financial') return <TabFinancial />;
+    if (tab.type === 'payment') return <TabPayment />;
+    if (tab.type === 'terms') return <TabTerms />;
+    return null;
   };
 
   return (
@@ -1200,9 +941,9 @@ export default function ProposalBuilderPage() {
         <div className="border-b border-gray-200">
           <nav className="-mb-px flex space-x-6 overflow-x-auto" aria-label="Tabs">
             {tabs.map(tab => (
-              <button key={tab.id} onClick={() => setActiveTab(tab.id)}
-                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab.id ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
-                {tab.id}. {tab.title}
+              <button key={tab.key} onClick={() => setActiveTab(tab.key)}
+                className={`whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm ${activeTab === tab.key ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'}`}>
+                {tab.title}
               </button>
             ))}
           </nav>

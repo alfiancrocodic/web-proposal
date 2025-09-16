@@ -24,7 +24,8 @@ interface UpdateProjectRequest {
 export async function GET(_req: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const { id } = await params;
   const db = readDb();
-  const project = db.projects.find(p => p.id === id);
+  const altId = String(id).startsWith('p-') ? String(id) : `p-${id}`;
+  const project = db.projects.find(p => p.id === id || p.id === altId);
   if (!project) return NextResponse.json({ error: 'not found' }, { status: 404 });
   return NextResponse.json(project);
 }
@@ -39,7 +40,8 @@ export async function PUT(req: NextRequest, { params }: RouteParams): Promise<Ne
   const body: UpdateProjectRequest = await req.json();
   const { id } = await params;
   const db = readDb();
-  const idx = db.projects.findIndex(p => p.id === id);
+  const altId = String(id).startsWith('p-') ? String(id) : `p-${id}`;
+  const idx = db.projects.findIndex(p => p.id === id || p.id === altId);
   if (idx === -1) return NextResponse.json({ error: 'not found' }, { status: 404 });
   db.projects[idx] = { ...db.projects[idx], ...body };
   writeDb(db);
@@ -55,10 +57,11 @@ export async function PUT(req: NextRequest, { params }: RouteParams): Promise<Ne
 export async function DELETE(_req: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   const { id } = await params;
   const db = readDb();
+  const altId = String(id).startsWith('p-') ? String(id) : `p-${id}`;
   const before = db.projects.length;
-  db.projects = db.projects.filter(p => p.id !== id);
+  db.projects = db.projects.filter(p => p.id !== id && p.id !== altId);
   if (db.projects.length === before) return NextResponse.json({ error: 'not found' }, { status: 404 });
-  db.proposals = db.proposals.filter(pr => pr.projectId !== id);
+  db.proposals = db.proposals.filter(pr => pr.projectId !== id && pr.projectId !== altId);
   writeDb(db);
   return NextResponse.json({ ok: true });
 }

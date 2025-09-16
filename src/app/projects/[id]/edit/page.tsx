@@ -3,13 +3,10 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { getProject, getClient, apiCall } from '@/lib/api';
+import type { Client } from '@/lib/api';
 
-// Interface untuk data client
-interface Client {
-  id: string;
-  company: string;
-  picName: string;
-}
+// Client type now imported from lib/api
 
 // Interface untuk role dalam project
 interface Role {
@@ -81,15 +78,28 @@ export default function EditProjectPage(): React.JSX.Element {
   const [editRoleIndex, setEditRoleIndex] = useState<number | null>(null); // null = create new
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) router.replace('/login');
+    if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
+      router.replace('/login');
+      return;
+    }
     if (!id) return;
     (async () => {
-      const p = await fetch(`/api/projects/${id}`).then(r=>r.json());
-      const roles = normalizeRoles(p.roles);
-      setForm({ name: p.name, analyst: p.analyst, grade: p.grade, roles });
-      // fetch client for display
-      const clients = await fetch('/api/clients').then(r=>r.json());
-      setClient(clients.find((c: Client)=>c.id===p.clientId) || null);
+      try {
+        // Ambil project dari backend (Laravel)
+        const p = await getProject(id as any);
+        const roles = normalizeRoles((p as any).roles);
+        setForm({ name: (p as any).name, analyst: (p as any).analyst, grade: (p as any).grade, roles });
+
+        // Ambil client terkait untuk ditampilkan
+        if ((p as any).client_id) {
+          const c = await getClient((p as any).client_id as any);
+          setClient(c);
+        } else {
+          setClient(null);
+        }
+      } catch (e) {
+        console.error('Failed loading project/client:', e);
+      }
     })();
   }, [router, id]);
 
@@ -165,8 +175,21 @@ export default function EditProjectPage(): React.JSX.Element {
    * Fungsi untuk submit form edit project
    */
   const submit = async (): Promise<void> => {
-    const res = await fetch(`/api/projects/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-    if (res.ok) router.push(`/projects/${id}`);
+    try {
+      // Update ke backend Laravel menggunakan helper apiCall (otomatis include Authorization)
+      const res = await apiCall(`/api/projects/${id}` as any, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: form.name,
+          analyst: form.analyst,
+          grade: form.grade,
+          roles: form.roles as any,
+        }),
+      });
+      if (res.ok) router.push(`/projects/${id}`);
+    } catch (e) {
+      console.error('Failed updating project:', e);
+    }
   };
 
   return (

@@ -64,21 +64,16 @@
       "roles": [
         {
           "name": "User",
-          "platforms": [
-            "Android Phone",
-            "Android Tablet",
-            "iOS iPhone"
-          ]
+          "platforms": []
         },
         {
           "name": "Manager",
+          "platforms": []
+        },
+        {
+          "name": "Sales",
           "platforms": [
-            "Android Phone",
-            "iOS iPad",
-            "Web Frontend",
-            "Web Backend",
-            "Android Tablet",
-            "iOS iPhone"
+            "Web Frontend"
           ]
         }
       ],
