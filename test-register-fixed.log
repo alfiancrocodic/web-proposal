@@ -1,0 +1,2117 @@
+FAIL src/__tests__/app/register/page.test.tsx
+  RegisterPage
+    ✕ should render register form correctly (123 ms)
+    ✕ should update form inputs correctly (13 ms)
+    ✕ should handle successful registration (12 ms)
+    ✕ should show error when passwords do not match (13 ms)
+    ✕ should handle registration failure with error message (11 ms)
+    ✕ should handle empty form submission (1047 ms)
+    ✕ should show loading state during registration (57 ms)
+    ✕ should have link to login page (10 ms)
+    ✕ should handle invalid email format (24 ms)
+    ✕ should handle network errors (24 ms)
+    ✕ should clear error when user starts typing again (9 ms)
+    ✕ should handle weak password (8 ms)
+
+  ● RegisterPage › should render register form correctly
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      46 |     // Check if all form elements are present
+      47 |     expect(screen.getByRole('heading', { name: 'Register' })).toBeInTheDocument();
+    > 48 |     expect(screen.getByLabelText('Full Name')).toBeInTheDocument();
+         |                   ^
+      49 |     expect(screen.getByLabelText('Nama')).toBeInTheDocument();
+      50 |     expect(screen.getByLabelText('Work Email')).toBeInTheDocument();
+      51 |     expect(screen.getByLabelText('Jabatan')).toBeInTheDocument();
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:48:19)
+
+  ● RegisterPage › should update form inputs correctly
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      63 |     render(<RegisterPage />);
+      64 |
+    > 65 |     const nameInput = screen.getByLabelText('Full Name') as HTMLInputElement;
+         |                              ^
+      66 |     const namaInput = screen.getByLabelText('Nama') as HTMLInputElement;
+      67 |     const emailInput = screen.getByLabelText('Work Email') as HTMLInputElement;
+      68 |     const jabatanInput = screen.getByLabelText('Jabatan') as HTMLInputElement;
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:65:30)
+
+  ● RegisterPage › should handle successful registration
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      108 |     render(<RegisterPage />);
+      109 |
+    > 110 |     const nameInput = screen.getByLabelText('Full Name');
+          |                              ^
+      111 |     const namaInput = screen.getByLabelText('Nama');
+      112 |     const emailInput = screen.getByLabelText('Work Email');
+      113 |     const jabatanInput = screen.getByLabelText('Jabatan');
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:110:30)
+
+  ● RegisterPage › should show error when passwords do not match
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      152 |     render(<RegisterPage />);
+      153 |
+    > 154 |     const nameInput = screen.getByLabelText('Full Name');
+          |                              ^
+      155 |     const namaInput = screen.getByLabelText('Nama');
+      156 |     const emailInput = screen.getByLabelText('Work Email');
+      157 |     const jabatanInput = screen.getByLabelText('Jabatan');
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:154:30)
+
+  ● RegisterPage › should handle registration failure with error message
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      185 |     render(<RegisterPage />);
+      186 |
+    > 187 |     const nameInput = screen.getByLabelText('Full Name');
+          |                              ^
+      188 |     const namaInput = screen.getByLabelText('Nama');
+      189 |     const emailInput = screen.getByLabelText('Work Email');
+      190 |     const jabatanInput = screen.getByLabelText('Jabatan');
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:187:30)
+
+  ● RegisterPage › should handle empty form submission
+
+    Unable to find an element with the text: Password dan konfirmasi password tidak sama. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      223 |     fireEvent.click(submitButton);
+      224 |
+    > 225 |     await waitFor(() => {
+          |                  ^
+      226 |       expect(screen.getByText('Password dan konfirmasi password tidak sama')).toBeInTheDocument();
+      227 |     });
+      228 |
+
+      at waitForWrapper (node_modules/@testing-library/dom/dist/wait-for.js:163:27)
+      at Object.<anonymous> (src/__tests__/app/register/page.test.tsx:225:18)
+
+  ● RegisterPage › should show loading state during registration
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      240 |     render(<RegisterPage />);
+      241 |
+    > 242 |     const nameInput = screen.getByLabelText('Full Name');
+          |                              ^
+      243 |     const namaInput = screen.getByLabelText('Nama');
+      244 |     const emailInput = screen.getByLabelText('Work Email');
+      245 |     const jabatanInput = screen.getByLabelText('Jabatan');
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:242:30)
+
+  ● RegisterPage › should have link to login page
+
+    TestingLibraryElementError: Unable to find an element with the text: Masuk di sini. This could be because the text is broken up by multiple elements. In this case, you can provide a function for your text matcher to make your matcher more flexible.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      267 |     render(<RegisterPage />);
+      268 |
+    > 269 |     const loginLink = screen.getByText('Masuk di sini');
+          |                              ^
+      270 |     expect(loginLink).toBeInTheDocument();
+      271 |     expect(loginLink.closest('a')).toHaveAttribute('href', '/login');
+      272 |   });
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:76:38
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByText (src/__tests__/app/register/page.test.tsx:269:30)
+
+  ● RegisterPage › should handle invalid email format
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      278 |     render(<RegisterPage />);
+      279 |
+    > 280 |     const nameInput = screen.getByLabelText('Full Name');
+          |                              ^
+      281 |     const namaInput = screen.getByLabelText('Nama');
+      282 |     const emailInput = screen.getByLabelText('Work Email');
+      283 |     const jabatanInput = screen.getByLabelText('Jabatan');
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:280:30)
+
+  ● RegisterPage › should handle network errors
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      315 |     render(<RegisterPage />);
+      316 |
+    > 317 |     const nameInput = screen.getByLabelText('Full Name');
+          |                              ^
+      318 |     const namaInput = screen.getByLabelText('Nama');
+      319 |     const emailInput = screen.getByLabelText('Work Email');
+      320 |     const jabatanInput = screen.getByLabelText('Jabatan');
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:317:30)
+
+  ● RegisterPage › should clear error when user starts typing again
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      350 |     render(<RegisterPage />);
+      351 |
+    > 352 |     const nameInput = screen.getByLabelText('Full Name');
+          |                              ^
+      353 |     const namaInput = screen.getByLabelText('Nama');
+      354 |     const emailInput = screen.getByLabelText('Work Email');
+      355 |     const jabatanInput = screen.getByLabelText('Jabatan');
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:352:30)
+
+  ● RegisterPage › should handle weak password
+
+    TestingLibraryElementError: Found a label with the text of: Full Name, however no form control was found associated to that label. Make sure you're using the "for" attribute or "aria-labelledby" attribute correctly.
+
+    Ignored nodes: comments, script, style
+    [36m<body>[39m
+      [36m<div>[39m
+        [36m<div[39m
+          [33mclass[39m=[32m"min-h-screen bg-cover bg-center flex items-center justify-center relative"[39m
+          [33mstyle[39m=[32m"background-image: url(\"https://images.unsplash.com/photo-1542744173-8e7e53415bb0?q=80&w=2070&auto=format&fit=crop\");"[39m
+        [36m>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"absolute inset-0 bg-blue-800 opacity-60"[39m
+          [36m/>[39m
+          [36m<div[39m
+            [33mclass[39m=[32m"relative z-10 w-full max-w-md bg-white p-8 rounded-2xl shadow-xl"[39m
+          [36m>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"flex items-center gap-3 mb-6"[39m
+            [36m>[39m
+              [36m<img[39m
+                [33malt[39m=[32m"Logo"[39m
+                [33mclass[39m=[32m"rounded"[39m
+                [33mheight[39m=[32m"32"[39m
+                [33msrc[39m=[32m"/ic_logo_crocodic_square.png"[39m
+                [33mwidth[39m=[32m"32"[39m
+              [36m/>[39m
+              [36m<h1[39m
+                [33mclass[39m=[32m"text-xl font-bold"[39m
+              [36m>[39m
+                [0mProposal Manager[0m
+              [36m</h1>[39m
+            [36m</div>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mb-6"[39m
+            [36m>[39m
+              [36m<h2[39m
+                [33mclass[39m=[32m"text-2xl font-bold text-gray-900"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</h2>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-gray-600 mt-2"[39m
+              [36m>[39m
+                [0mCreate your account to get started.[0m
+              [36m</p>[39m
+            [36m</div>[39m
+            [36m<form[39m
+              [33mclass[39m=[32m"space-y-4"[39m
+            [36m>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mFull Name[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mNama[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mWork Email[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"email"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mJabatan[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"text"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mPassword[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<div>[39m
+                [36m<label[39m
+                  [33mclass[39m=[32m"block text-sm font-medium text-gray-700"[39m
+                [36m>[39m
+                  [0mConfirm Password[0m
+                [36m</label>[39m
+                [36m<input[39m
+                  [33mclass[39m=[32m"mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white"[39m
+                  [33mrequired[39m=[32m""[39m
+                  [33mtype[39m=[32m"password"[39m
+                  [33mvalue[39m=[32m""[39m
+                [36m/>[39m
+              [36m</div>[39m
+              [36m<button[39m
+                [33mclass[39m=[32m"w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"[39m
+                [33mtype[39m=[32m"submit"[39m
+              [36m>[39m
+                [0mRegister[0m
+              [36m</button>[39m
+            [36m</form>[39m
+            [36m<div[39m
+              [33mclass[39m=[32m"mt-4 text-center"[39m
+            [36m>[39m
+              [36m<p[39m
+                [33mclass[39m=[32m"text-sm text-gray-600"[39m
+              [36m>[39m
+                [0mAlready have an account?[0m
+                [0m [0m
+                [36m<a[39m
+                  [33mclass[39m=[32m"text-blue-600 hover:text-blue-800"[39m
+                  [33mhref[39m=[32m"/login"[39m
+                [36m>[39m
+                  [0mLogin here[0m
+                [36m</a>[39m
+              [36m</p>[39m
+            [36m</div>[39m
+          [36m</div>[39m
+          [36m<footer[39m
+            [33mclass[39m=[32m"absolute bottom-4 text-center text-sm text-white"[39m
+          [36m>[39m
+            [0mCopyright ©2025. All rights reserved.[0m
+          [36m</footer>[39m
+        [36m</div>[39m
+      [36m</div>[39m
+    [36m</body>[39m
+
+      385 |     render(<RegisterPage />);
+      386 |
+    > 387 |     const nameInput = screen.getByLabelText('Full Name');
+          |                              ^
+      388 |     const namaInput = screen.getByLabelText('Nama');
+      389 |     const emailInput = screen.getByLabelText('Work Email');
+      390 |     const jabatanInput = screen.getByLabelText('Jabatan');
+
+      at Object.getElementError (node_modules/@testing-library/dom/dist/config.js:37:19)
+      at getAllByLabelText (node_modules/@testing-library/dom/dist/queries/label-text.js:108:40)
+      at node_modules/@testing-library/dom/dist/query-helpers.js:52:17
+      at node_modules/@testing-library/dom/dist/query-helpers.js:95:19
+      at Object.getByLabelText (src/__tests__/app/register/page.test.tsx:387:30)
+
+Test Suites: 1 failed, 1 total
+Tests:       12 failed, 12 total
+Snapshots:   0 total
+Time:        2.401 s
+Ran all test suites matching register/page\.test\.tsx.

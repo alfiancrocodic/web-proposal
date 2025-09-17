@@ -76,8 +76,9 @@ export default function LoginPage(): React.JSX.Element {
         )}
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Work Email</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Work Email</label>
             <input 
+              id="email"
               type="email" 
               required 
               value={form.email}
@@ -86,8 +87,9 @@ export default function LoginPage(): React.JSX.Element {
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
             <input 
+              id="password"
               type="password" 
               required 
               value={form.password}
@@ -119,4 +121,3 @@ export default function LoginPage(): React.JSX.Element {
     </div>
   );
 }
-

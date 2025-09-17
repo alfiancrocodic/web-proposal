@@ -12,7 +12,6 @@ import { useErrorHandler } from '@/components/ErrorBoundary';
  */
 interface RegisterForm {
   name: string;
-  nama: string;
   email: string;
   jabatan: string;
   password: string;
@@ -27,11 +26,10 @@ export default function RegisterPage(): React.JSX.Element {
   const router = useRouter();
   const [form, setForm] = useState<RegisterForm>({
     name: '',
-    nama: '',
     email: '',
     jabatan: '',
     password: '',
-    password_confirmation: ''
+    password_confirmation: '',
   });
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string>('');
@@ -48,6 +46,25 @@ export default function RegisterPage(): React.JSX.Element {
     setLoading(true);
     setError('');
     setSuccess('');
+    
+    // Validasi field kosong
+    if (!form.name || !form.email || !form.jabatan || !form.password || !form.password_confirmation) {
+      const errorMessage = 'Semua field harus diisi';
+      setError(errorMessage);
+      showWarning(errorMessage);
+      setLoading(false);
+      return;
+    }
+    
+    // Validasi format email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(form.email)) {
+      const errorMessage = 'Format email tidak valid';
+      setError(errorMessage);
+      showWarning(errorMessage);
+      setLoading(false);
+      return;
+    }
     
     // Validasi password confirmation
     if (form.password !== form.password_confirmation) {
@@ -83,7 +100,6 @@ export default function RegisterPage(): React.JSX.Element {
       // Reset form
       setForm({
         name: '',
-        nama: '',
         email: '',
         jabatan: '',
         password: '',
@@ -127,62 +143,72 @@ export default function RegisterPage(): React.JSX.Element {
         )}
         <form onSubmit={onSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700">Full Name</label>
+            <label htmlFor="name" className="block text-sm font-medium text-gray-700">Full Name</label>
             <input 
+              id="name"
               type="text" 
               required 
               value={form.name}
-              onChange={(e) => setForm({ ...form, name: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, name: e.target.value });
+                if (error) setError('');
+              }}
               className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Nama</label>
+            <label htmlFor="email" className="block text-sm font-medium text-gray-700">Work Email</label>
             <input 
-              type="text" 
-              required 
-              value={form.nama}
-              onChange={(e) => setForm({ ...form, nama: e.target.value })}
-              className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" 
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700">Work Email</label>
-            <input 
+              id="email"
               type="email" 
               required 
               value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, email: e.target.value });
+                if (error) setError('');
+              }}
               className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Jabatan</label>
+            <label htmlFor="jabatan" className="block text-sm font-medium text-gray-700">Jabatan</label>
             <input 
+              id="jabatan"
               type="text" 
               required 
               value={form.jabatan}
-              onChange={(e) => setForm({ ...form, jabatan: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, jabatan: e.target.value });
+                if (error) setError('');
+              }}
               className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Password</label>
+            <label htmlFor="password" className="block text-sm font-medium text-gray-700">Password</label>
             <input 
+              id="password"
               type="password" 
               required 
               value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, password: e.target.value });
+                if (error) setError('');
+              }}
               className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" 
             />
           </div>
           <div>
-            <label className="block text-sm font-medium text-gray-700">Confirm Password</label>
+            <label htmlFor="password_confirmation" className="block text-sm font-medium text-gray-700">Confirm Password</label>
             <input 
+              id="password_confirmation"
               type="password" 
               required 
               value={form.password_confirmation}
-              onChange={(e) => setForm({ ...form, password_confirmation: e.target.value })}
+              onChange={(e) => {
+                setForm({ ...form, password_confirmation: e.target.value });
+                if (error) setError('');
+              }}
               className="mt-1 block w-full px-4 py-3 bg-gray-100 rounded-lg focus:ring-blue-500 focus:border-blue-500 focus:bg-white" 
             />
           </div>

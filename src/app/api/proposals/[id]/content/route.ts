@@ -1,10 +1,42 @@
-/**
- * API Route untuk mendapatkan dan menyimpan content proposal
- * Mock implementation untuk development
- */
+import { NextResponse, NextRequest } from 'next/server';
+
+// --- TYPE DEFINITIONS ---
+interface Feature {
+  id: number;
+  name: string;
+  description: string;
+  mandays: number;
+  selected: boolean;
+}
+
+interface SubModule {
+  id: number;
+  name: string;
+  selected: boolean;
+  features: Feature[];
+}
+
+interface MainModule {
+  id: number;
+  name: string;
+  selected: boolean;
+  subModules: SubModule[];
+}
+
+interface ProposalContent {
+  featureSales: {
+    mainModules: MainModule[];
+  };
+  totalMandays: number;
+  lastUpdated?: string;
+}
+
+interface MockData {
+  [key: number]: ProposalContent;
+}
 
 // Mock data untuk proposal content
-const mockProposalContent = {
+const mockProposalContent: MockData = {
   1: {
     featureSales: {
       mainModules: [
@@ -43,27 +75,6 @@ const mockProposalContent = {
             }
           ]
         },
-        {
-          id: 2,
-          name: "Payment Gateway",
-          selected: false,
-          subModules: [
-            {
-              id: 3,
-              name: "Credit Card",
-              selected: false,
-              features: [
-                {
-                  id: 3,
-                  name: "Visa, Mastercard",
-                  description: "Secure payment processing",
-                  mandays: 5,
-                  selected: false
-                }
-              ]
-            }
-          ]
-        }
       ]
     },
     totalMandays: 2,
@@ -71,30 +82,29 @@ const mockProposalContent = {
   }
 };
 
+interface RouteParams {
+  params: { id: string };
+}
+
 /**
  * GET handler untuk mendapatkan content proposal
  */
-export async function GET(request, { params }) {
+export async function GET(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   try {
-    const { id } = await params;
+    const { id } = params;
     
-    // Simulasi delay network
     await new Promise(resolve => setTimeout(resolve, 100));
     
-    const content = mockProposalContent[id] || {
+    const content = mockProposalContent[Number(id)] || {
       featureSales: { mainModules: [] },
       totalMandays: 0
     };
     
-    return Response.json(content, {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    return NextResponse.json(content);
+
   } catch (error) {
     console.error('Error getting proposal content:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to get proposal content' },
       { status: 500 }
     );
@@ -104,32 +114,29 @@ export async function GET(request, { params }) {
 /**
  * PUT handler untuk menyimpan content proposal
  */
-export async function PUT(request, { params }) {
+export async function PUT(request: NextRequest, { params }: RouteParams): Promise<NextResponse> {
   try {
-    const { id } = await params;
-    const body = await request.json();
+    const { id } = params;
+    const body: ProposalContent = await request.json();
     
-    // Simulasi delay network
     await new Promise(resolve => setTimeout(resolve, 200));
     
-    // Update mock data
-    mockProposalContent[id] = {
+    mockProposalContent[Number(id)] = {
       ...body,
       lastUpdated: new Date().toISOString()
     };
     
-    console.log(`Proposal ${id} content updated:`, mockProposalContent[id]);
+    console.log(`Proposal ${id} content updated:`, mockProposalContent[Number(id)]);
     
-    return Response.json(
+    return NextResponse.json(
       { message: 'Content saved successfully' },
       { status: 200 }
     );
   } catch (error) {
     console.error('Error saving proposal content:', error);
-    return Response.json(
+    return NextResponse.json(
       { error: 'Failed to save proposal content' },
       { status: 500 }
     );
   }
 }
-
