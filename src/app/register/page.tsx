@@ -5,6 +5,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { registerUser } from '@/lib/api';
 import { useToast } from '@/components/Toast';
+import LoadingSpinner from '@/components/LoadingSpinner';
 import { useErrorHandler } from '@/components/ErrorBoundary';
 
 /**
@@ -215,9 +216,16 @@ export default function RegisterPage(): React.JSX.Element {
           <button 
             type="submit" 
             disabled={loading}
-            className="w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 rounded-lg text-black bg-yellow-400 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
           >
-            {loading ? 'Loading...' : 'Register'}
+            {loading ? (
+              <>
+                <LoadingSpinner size="sm" color="gray" />
+                Loading...
+              </>
+            ) : (
+              'Register'
+            )}
           </button>
         </form>
         <div className="mt-4 text-center">

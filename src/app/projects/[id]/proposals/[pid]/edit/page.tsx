@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState, Fragment, useRef, useCallback } from 'rea
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { ShimmerBox, ShimmerForm } from '@/components/ShimmerEffect';
 import { getProposalTemplates, getProposalContent, putProposalContent, getProject, getProposal, searchMainModules, getSubModuleComplete } from '@/lib/api';
 
 // Icon Components
@@ -145,6 +146,8 @@ export default function ProposalBuilderPage() {
   const [proposal, setProposal] = useState<Proposal | null>(null);
   const [content, setContent] = useState<Content>(DEFAULT_CONTENT);
   const [activeTab, setActiveTab] = useState('system');
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
   
   // State untuk modal input
   const [showModal, setShowModal] = useState(false);
@@ -182,68 +185,76 @@ export default function ProposalBuilderPage() {
     }
     if (!projectId || !pid) return;
     
-    // Use backend API helpers (Laravel)
-    getProject(parseInt(projectId)).then((data: any) => setProject(data)).catch(()=>{});
-    getProposal(parseInt(pid)).then((data: any) => setProposal(data)).catch(()=>{});
-    
     (async () => {
-      const d = await getProposalContent(parseInt(pid));
-      const next: Content = { ...DEFAULT_CONTENT, ...d };
-      
       try {
-        const tpl = await getProposalTemplates();
-        const mobile = tpl?.complex?.mobile_env;
-        const web = tpl?.complex?.web_env;
+        setIsLoading(true);
         
-        const buildWithPairs = (section: any): SystemEnvironmentSection => {
-          const cols = section?.columns || [];
-          const hasEngine = cols.some((c: any) => c.key === 'engine');
-          const hasFramework = cols.some((c: any) => c.key === 'framework');
-          const leftKey = hasEngine ? 'engine' : (hasFramework ? 'framework' : undefined);
+        // Use backend API helpers (Laravel)
+        const [projectData, proposalData] = await Promise.all([
+          getProject(parseInt(projectId)).catch(() => null),
+          getProposal(parseInt(pid)).catch(() => null)
+        ]);
+        
+        setProject(projectData);
+        setProposal(proposalData);
+        
+        const d = await getProposalContent(parseInt(pid));
+        const next: Content = { ...DEFAULT_CONTENT, ...d };
+        
+        try {
+          const tpl = await getProposalTemplates();
+          const mobile = tpl?.complex?.mobile_env;
+          const web = tpl?.complex?.web_env;
           
-          const rows = (section?.rows || []).map((r: any) => {
-            if (!leftKey) return { ...r };
+          const buildWithPairs = (section: any): SystemEnvironmentSection => {
+            const cols = section?.columns || [];
+            const hasEngine = cols.some((c: any) => c.key === 'engine');
+            const hasFramework = cols.some((c: any) => c.key === 'framework');
+            const leftKey = hasEngine ? 'engine' : (hasFramework ? 'framework' : undefined);
             
-            const toArray = (val: any): string[] => {
-              if (Array.isArray(val)) return val;
-              if (typeof val === 'string') {
-                try { 
-                  const parsed = JSON.parse(val); 
-                  if (Array.isArray(parsed)) return parsed; 
-                } catch {}
-                return val.split(',').map(s => s.trim()).filter(Boolean);
-              }
-              return [];
+            const rows = (section?.rows || []).map((r: any) => {
+              if (!leftKey) return { ...r };
+              
+              const toArray = (val: any): string[] => {
+                if (Array.isArray(val)) return val;
+                if (typeof val === 'string') {
+                  try { 
+                    const parsed = JSON.parse(val); 
+                    if (Array.isArray(parsed)) return parsed; 
+                  } catch {}
+                  return val.split(',').map(s => s.trim()).filter(Boolean);
+                }
+                return [];
+              };
+              
+              const engines = toArray(r.values?.[leftKey]);
+              const langs = toArray(r.values?.programming_language);
+              const existingPairs = Array.isArray(r.pairs) ? r.pairs : [];
+              const max = Math.max(engines.length, langs.length);
+              
+              const pairs = Array.from({length: max}).map((_, i) => ({
+                engine: engines[i] || '',
+                language: langs[i] || '',
+                checked: existingPairs[i]?.checked || false,
+              }));
+              
+              return { ...r, pairs };
+            });
+            
+            return { 
+              rows, 
+              columns: section?.columns || [], 
+              footnotes: section?.footnotes || [], 
+              leftKey 
             };
-            
-            const engines = toArray(r.values?.[leftKey]);
-            const langs = toArray(r.values?.programming_language);
-            const existingPairs = Array.isArray(r.pairs) ? r.pairs : [];
-            const max = Math.max(engines.length, langs.length);
-            
-            const pairs = Array.from({length: max}).map((_, i) => ({
-              engine: engines[i] || '',
-              language: langs[i] || '',
-              checked: existingPairs[i]?.checked || false,
-            }));
-            
-            return { ...r, pairs };
-          });
-          
-          return { 
-            rows, 
-            columns: section?.columns || [], 
-            footnotes: section?.footnotes || [], 
-            leftKey 
           };
-        };
-        
-        next.systemEnvironment = {
-          ...next.systemEnvironment,
-          template: { mobile, web, simple: tpl?.simple },
-          mobile: buildWithPairs(mobile),
-          web: buildWithPairs(web),
-        };
+          
+          next.systemEnvironment = {
+            ...next.systemEnvironment,
+            template: { mobile, web, simple: tpl?.simple },
+            mobile: buildWithPairs(mobile),
+            web: buildWithPairs(web),
+          };
         
         if (!next.termsOfPayment || next.termsOfPayment.length === 0) {
           const tp = tpl?.complex?.terms_payment;
@@ -264,7 +275,7 @@ export default function ProposalBuilderPage() {
         }
       } catch(e) {}
 
-      // Migrasi data lama ke struktur baru featuresByRole
+        // Migrasi data lama ke struktur baru featuresByRole
       if (Array.isArray(next.featureSales) && next.featureSales.length) {
         next.featuresByRole = {
           ...(next.featuresByRole || {}),
@@ -291,12 +302,24 @@ export default function ProposalBuilderPage() {
       }
 
       setContent(next);
+      } catch (error) {
+        console.error('Error loading proposal data:', error);
+      } finally {
+        setIsLoading(false);
+      }
     })();
   }, [router, projectId, pid]);
 
   const save = async () => {
-    await putProposalContent(parseInt(pid), content);
-    router.push(`/projects/${projectId}`);
+    try {
+      setIsSaving(true);
+      await putProposalContent(parseInt(pid), content);
+      router.push(`/projects/${projectId}`);
+    } catch (error) {
+      console.error('Error saving proposal:', error);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   // Helpers for role-based feature modules storage
@@ -420,7 +443,7 @@ export default function ProposalBuilderPage() {
     }, []);
 
     useEffect(() => {
-      return () => {
+    return () => {
         Object.values(timeoutRefs.current).forEach(timeout => {
           if (timeout) clearTimeout(timeout);
         });
@@ -1570,6 +1593,58 @@ export default function ProposalBuilderPage() {
     return null;
   };
 
+  // Loading state untuk halaman
+  if (isLoading) {
+    return (
+      <div className="bg-white min-h-screen">
+        <Header />
+        <main className="max-w-screen-2xl mx-auto px-3 sm:px-4 lg:px-6 py-6 space-y-6">
+          {/* Breadcrumbs shimmer */}
+          <div className="flex items-center space-x-2">
+            <ShimmerBox className="w-16 h-5" />
+            <span className="text-gray-400">/</span>
+            <ShimmerBox className="w-20 h-5" />
+            <span className="text-gray-400">/</span>
+            <ShimmerBox className="w-32 h-5" />
+            <span className="text-gray-400">/</span>
+            <ShimmerBox className="w-24 h-5" />
+            <span className="text-gray-400">/</span>
+            <ShimmerBox className="w-16 h-5" />
+          </div>
+          
+          {/* Header shimmer */}
+          <div className="flex justify-between items-start">
+            <div>
+              <ShimmerBox className="w-80 h-9 mb-2" />
+              <div className="flex items-center space-x-4">
+                <ShimmerBox className="w-24 h-5" />
+                <ShimmerBox className="w-32 h-5" />
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <ShimmerBox className="w-16 h-10" />
+              <ShimmerBox className="w-32 h-10" />
+            </div>
+          </div>
+
+          {/* Tabs shimmer */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-6" aria-label="Tabs">
+              {Array.from({ length: 5 }).map((_, i) => (
+                <ShimmerBox key={i} className="w-32 h-10" />
+              ))}
+            </nav>
+          </div>
+
+          {/* Content shimmer */}
+          <div className="bg-white p-6 rounded-lg">
+            <ShimmerForm />
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="bg-white min-h-screen">
       <Header />
@@ -1585,7 +1660,24 @@ export default function ProposalBuilderPage() {
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => router.push(`/projects/${projectId}`)} className="p-2 rounded-md border hover:bg-gray-100">Back</button>
-            <button onClick={save} className="bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700">Save Proposal</button>
+            <button 
+              onClick={save} 
+              disabled={isSaving}
+              className={`font-semibold py-2 px-5 rounded-lg transition-colors ${
+                isSaving 
+                  ? 'bg-gray-400 text-gray-200 cursor-not-allowed' 
+                  : 'bg-blue-600 text-white hover:bg-blue-700'
+              }`}
+            >
+              {isSaving ? (
+                <div className="flex items-center space-x-2">
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Saving...</span>
+                </div>
+              ) : (
+                'Save Proposal'
+              )}
+            </button>
           </div>
         </div>
 

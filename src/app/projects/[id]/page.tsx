@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { ShimmerBox, ShimmerCard } from '@/components/ShimmerEffect';
 import { 
   getProject, 
   getClient, 
@@ -31,6 +32,8 @@ export default function ProjectDetailsPage(): React.JSX.Element {
   const [project, setProject] = useState<Project | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [proposals, setProposals] = useState<Proposal[]>([]);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isCreatingProposal, setIsCreatingProposal] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
@@ -41,11 +44,12 @@ export default function ProjectDetailsPage(): React.JSX.Element {
     
     const loadData = async () => {
       try {
-        const projectData = await getProject(id as any);
+        setIsLoading(true);
+        const projectData = await getProject(id as string);
         setProject(projectData);
         
         if (projectData.client_id) {
-          const clientData = await getClient(projectData.client_id as any);
+          const clientData = await getClient(projectData.client_id);
           setClient(clientData);
         }
         
@@ -55,6 +59,8 @@ export default function ProjectDetailsPage(): React.JSX.Element {
         setProposals(projectProposals);
       } catch (error) {
         console.error('Error loading project data:', error);
+      } finally {
+        setIsLoading(false);
       }
     };
     
@@ -66,8 +72,9 @@ export default function ProjectDetailsPage(): React.JSX.Element {
    */
   const handleCreateProposal = async (): Promise<void> => {
     try {
+      setIsCreatingProposal(true);
       const proposalData = {
-        project_id: id as any,
+        project_id: id as string,
         version: String(proposals.length + 1)
       };
       
@@ -76,10 +83,93 @@ export default function ProjectDetailsPage(): React.JSX.Element {
     } catch (error) {
       console.error('Error creating proposal:', error);
       alert('Gagal membuat proposal. Silakan coba lagi.');
+    } finally {
+      setIsCreatingProposal(false);
     }
   };
 
-  if (!project) return <div>Loading...</div>;
+  if (isLoading) {
+    return (
+      <div className="bg-white min-h-screen">
+        <Header />
+        <main className="max-w-screen-2xl mx-auto px-3 sm:px-4 lg:px-6 py-6 space-y-6">
+          {/* Breadcrumbs shimmer */}
+          <div className="flex items-center space-x-2">
+            <ShimmerBox className="w-16 h-5" />
+            <span className="text-gray-400">/</span>
+            <ShimmerBox className="w-20 h-5" />
+            <span className="text-gray-400">/</span>
+            <ShimmerBox className="w-32 h-5" />
+          </div>
+          
+          {/* Header shimmer */}
+          <div className="flex justify-between items-start">
+            <div>
+              <ShimmerBox className="w-80 h-9 mb-2" />
+              <ShimmerBox className="w-96 h-5" />
+            </div>
+          </div>
+
+          {/* Content grid shimmer */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Project Information Card */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex justify-between items-center mb-6">
+                <ShimmerBox className="w-40 h-6" />
+                <ShimmerBox className="w-24 h-9" />
+              </div>
+              <div className="grid grid-cols-2 gap-y-4 gap-x-2">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i}>
+                    <ShimmerBox className="w-20 h-4 mb-1" />
+                    <ShimmerBox className="w-32 h-5" />
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Proposals Card */}
+            <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+              <div className="flex justify-between items-center mb-6">
+                <ShimmerBox className="w-20 h-6" />
+                <div className="flex items-center gap-2">
+                  <ShimmerBox className="w-10 h-9" />
+                  <ShimmerBox className="w-32 h-9" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                {/* Table header */}
+                <div className="bg-gray-50 px-4 py-3 grid grid-cols-3 gap-4">
+                  <ShimmerBox className="w-16 h-4" />
+                  <ShimmerBox className="w-20 h-4" />
+                  <ShimmerBox className="w-12 h-4" />
+                </div>
+                {/* Table rows */}
+                {Array.from({ length: 3 }).map((_, i) => (
+                  <div key={i} className="px-4 py-3 grid grid-cols-3 gap-4 border-b border-gray-200">
+                    <ShimmerBox className="w-20 h-5" />
+                    <ShimmerBox className="w-24 h-5" />
+                    <ShimmerBox className="w-10 h-5" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!project) {
+    return (
+      <div className="bg-white min-h-screen">
+        <Header />
+        <main className="max-w-screen-2xl mx-auto px-3 sm:px-4 lg:px-6 py-6">
+          <div className="text-center text-gray-500">Project tidak ditemukan</div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
@@ -163,9 +253,18 @@ export default function ProjectDetailsPage(): React.JSX.Element {
                 <button className="p-2 rounded-md border hover:bg-gray-100" title="More actions">
                   <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="1"></circle><circle cx="19" cy="12" r="1"></circle><circle cx="5" cy="12" r="1"></circle></svg>
                 </button>
-                <button onClick={handleCreateProposal} className="text-sm bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 inline-flex items-center gap-2">
-                  <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
-                  Create Proposal
+                <button onClick={handleCreateProposal} disabled={isCreatingProposal} className="text-sm bg-blue-600 text-white font-semibold py-2 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2">
+                  {isCreatingProposal ? (
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <svg className="w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4"/></svg>
+                      Create Proposal
+                    </>
+                  )}
                 </button>
               </div>
             </div>

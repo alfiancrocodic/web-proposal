@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Header from '@/components/Header';
 import Breadcrumbs from '@/components/Breadcrumbs';
+import { ShimmerBox, ShimmerForm } from '@/components/ShimmerEffect';
 import { getProject, getClient, apiCall } from '@/lib/api';
 import type { Client } from '@/lib/api';
 
@@ -76,6 +77,8 @@ export default function EditProjectPage(): React.JSX.Element {
   const [roleName, setRoleName] = useState<string>('');
   const [selectedPlatforms, setSelectedPlatforms] = useState<string[]>([]);
   const [editRoleIndex, setEditRoleIndex] = useState<number | null>(null); // null = create new
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
 
   useEffect(() => {
     if (typeof window !== 'undefined' && !localStorage.getItem('auth_token')) {
@@ -85,6 +88,7 @@ export default function EditProjectPage(): React.JSX.Element {
     if (!id) return;
     (async () => {
       try {
+        setIsLoading(true);
         // Ambil project dari backend (Laravel)
         const p = await getProject(id as any);
         const roles = normalizeRoles((p as any).roles);
@@ -99,6 +103,8 @@ export default function EditProjectPage(): React.JSX.Element {
         }
       } catch (e) {
         console.error('Failed loading project/client:', e);
+      } finally {
+        setIsLoading(false);
       }
     })();
   }, [router, id]);
@@ -176,6 +182,7 @@ export default function EditProjectPage(): React.JSX.Element {
    */
   const submit = async (): Promise<void> => {
     try {
+      setIsSaving(true);
       // Update ke backend Laravel menggunakan helper apiCall (otomatis include Authorization)
       const res = await apiCall(`/api/projects/${id}` as any, {
         method: 'PUT',
@@ -189,8 +196,40 @@ export default function EditProjectPage(): React.JSX.Element {
       if (res.ok) router.push(`/projects/${id}`);
     } catch (e) {
       console.error('Failed updating project:', e);
+    } finally {
+      setIsSaving(false);
     }
   };
+
+  if (isLoading) {
+    return (
+      <div className="bg-white min-h-screen">
+        <Header />
+        <main className="max-w-screen-2xl mx-auto px-3 sm:px-4 lg:px-6 py-6 space-y-6">
+          {/* Breadcrumbs shimmer */}
+          <div className="flex items-center space-x-2">
+            <ShimmerBox className="w-16 h-5" />
+            <span className="text-gray-400">/</span>
+            <ShimmerBox className="w-20 h-5" />
+            <span className="text-gray-400">/</span>
+            <ShimmerBox className="w-40 h-5" />
+          </div>
+          
+          {/* Header shimmer */}
+          <div className="flex justify-between items-start">
+            <div>
+              <ShimmerBox className="w-80 h-9 mb-2" />
+              <ShimmerBox className="w-96 h-5" />
+            </div>
+            <ShimmerBox className="w-24 h-10" />
+          </div>
+
+          {/* Form shimmer */}
+          <ShimmerForm />
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-white min-h-screen">
@@ -202,7 +241,16 @@ export default function EditProjectPage(): React.JSX.Element {
             <h1 className="text-3xl font-bold text-gray-900">Add/Edit Project</h1>
             <p className="mt-1 text-sm text-gray-500">All-inclusive vacations and flights to the Caribbean</p>
           </div>
-          <button onClick={submit} className="bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700">Save Project</button>
+          <button onClick={submit} disabled={isSaving} className="bg-blue-600 text-white font-semibold py-2 px-5 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2">
+            {isSaving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Saving...
+              </>
+            ) : (
+              'Save Project'
+            )}
+          </button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -287,7 +335,16 @@ export default function EditProjectPage(): React.JSX.Element {
         {/* Footer actions */}
         <div className="flex justify-end gap-2">
           <button type="button" onClick={()=>router.back()} className="px-4 py-2 rounded-lg border border-gray-300 hover:bg-gray-100">Cancel</button>
-          <button onClick={submit} className="px-4 py-2 rounded-lg bg-blue-600 text-white">Save</button>
+          <button onClick={submit} disabled={isSaving} className="px-4 py-2 rounded-lg bg-blue-600 text-white disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2">
+            {isSaving ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                Saving...
+              </>
+            ) : (
+              'Save'
+            )}
+          </button>
         </div>
       </main>
 
