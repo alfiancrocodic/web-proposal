@@ -1,6 +1,15 @@
 /**
  * Konfigurasi API untuk aplikasi frontend
  */
+import { components, paths } from "@/types/openapi";
+
+// Helper types derived from the auto-generated openapi types
+export type Client = components["schemas"]["Client"];
+export type ClientFormData = paths["/api/clients"]["post"]["requestBody"]["content"]["application/json"];
+export type Project = components["schemas"]["Project"];
+export type ProjectFormData = components["schemas"]["ProjectFormData"];
+export type Proposal = components["schemas"]["Proposal"];
+export type ProposalFormData = components["schemas"]["ProposalFormData"];
 
 // Base URL untuk API backend
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8001';
@@ -236,31 +245,6 @@ export const registerUser = async (userData: {
 // ===== CLIENT API FUNCTIONS =====
 
 /**
- * Interface untuk data client
- */
-export interface Client {
-  id: number;
-  company: string;
-  location: string;
-  badanUsaha: string;
-  picName: string;
-  position: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-/**
- * Interface untuk form data client
- */
-export interface ClientFormData {
-  company: string;
-  location: string;
-  badanUsaha: string;
-  picName: string;
-  position: string;
-}
-
-/**
  * Fungsi untuk mendapatkan semua client dari backend
  * @returns Promise dengan array client
  */
@@ -272,7 +256,8 @@ export const getClients = async (): Promise<Client[]> => {
     throw new Error(errorData.message || 'Gagal mengambil data client');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Client[];
 };
 
 /**
@@ -288,7 +273,8 @@ export const getClient = async (id: number): Promise<Client> => {
     throw new Error(errorData.message || 'Gagal mengambil data client');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Client;
 };
 
 /**
@@ -307,7 +293,8 @@ export const createClient = async (clientData: ClientFormData): Promise<Client> 
     throw new Error(errorData.message || 'Gagal membuat client');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Client;
 };
 
 /**
@@ -327,7 +314,8 @@ export const updateClient = async (id: number, clientData: ClientFormData): Prom
     throw new Error(errorData.message || 'Gagal mengupdate client');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Client;
 };
 
 /**
@@ -349,32 +337,6 @@ export const deleteClient = async (id: number): Promise<void> => {
 // ===== PROJECT API FUNCTIONS =====
 
 /**
- * Interface untuk data project
- */
-export interface Project {
-  id: number;
-  client_id: number;
-  name: string;
-  analyst: string;
-  grade: string;
-  roles: string[];
-  client?: Client;
-  created_at?: string;
-  updated_at?: string;
-}
-
-/**
- * Interface untuk form data project
- */
-export interface ProjectFormData {
-  client_id: number;
-  name: string;
-  analyst: string;
-  grade: string;
-  roles: string[];
-}
-
-/**
  * Fungsi untuk mendapatkan semua project dari backend
  * @returns Promise dengan array project
  */
@@ -386,7 +348,8 @@ export const getProjects = async (): Promise<Project[]> => {
     throw new Error(errorData.message || 'Gagal mengambil data project');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Project[];
 };
 
 /**
@@ -402,7 +365,8 @@ export const getProject = async (id: number): Promise<Project> => {
     throw new Error(errorData.message || 'Gagal mengambil data project');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Project;
 };
 
 /**
@@ -421,7 +385,8 @@ export const createProject = async (projectData: ProjectFormData): Promise<Proje
     throw new Error(errorData.message || 'Gagal membuat project');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Project;
 };
 
 /**
@@ -441,7 +406,8 @@ export const updateProject = async (id: number, projectData: ProjectFormData): P
     throw new Error(errorData.message || 'Gagal mengupdate project');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Project;
 };
 
 /**
@@ -513,26 +479,6 @@ export const getSubModuleComplete = async (id: number | string): Promise<any> =>
 // ===== PROPOSAL API FUNCTIONS =====
 
 /**
- * Interface untuk data proposal
- */
-export interface Proposal {
-  id: number;
-  project_id: number;
-  version: string;
-  project?: Project;
-  created_at?: string;
-  updated_at?: string;
-}
-
-/**
- * Interface untuk form data proposal
- */
-export interface ProposalFormData {
-  project_id: number;
-  version: string;
-}
-
-/**
  * Fungsi untuk mendapatkan semua proposal dari backend
  * @returns Promise dengan array proposal
  */
@@ -544,7 +490,8 @@ export const getProposals = async (): Promise<Proposal[]> => {
     throw new Error(errorData.message || 'Gagal mengambil data proposal');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Proposal[];
 };
 
 /**
@@ -560,7 +507,8 @@ export const getProposal = async (id: number): Promise<Proposal> => {
     throw new Error(errorData.message || 'Gagal mengambil data proposal');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Proposal;
 };
 
 /**
@@ -579,7 +527,8 @@ export const createProposal = async (proposalData: ProposalFormData): Promise<Pr
     throw new Error(errorData.message || 'Gagal membuat proposal');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Proposal;
 };
 
 /**
@@ -599,7 +548,8 @@ export const updateProposal = async (id: number, proposalData: ProposalFormData)
     throw new Error(errorData.message || 'Gagal mengupdate proposal');
   }
   
-  return response.json();
+  const data = await response.json();
+  return data as Proposal;
 };
 
 /**
